@@ -2,6 +2,7 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
+import Clock from "../components/Clock"
 
 const Header = ({ isAuthenticated = false, onLogout }) => {
   return (
@@ -48,6 +49,10 @@ const Header = ({ isAuthenticated = false, onLogout }) => {
               Log Out
             </Button>
           )}
+
+          <div className="flex items-center justify-center">
+            <Clock />
+          </div>
         </div>
       </div>
     </header>

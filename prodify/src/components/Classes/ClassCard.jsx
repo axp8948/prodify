@@ -19,7 +19,7 @@ export default function ClassCard({
       <Link
         to={`/classes/${normalizedId}`}
         className="
-          block
+          block 
           bg-white/10 backdrop-blur-sm    /* glassy background */
           p-6 rounded-lg shadow-md
           hover:bg-white/20 hover:shadow-xl
@@ -27,7 +27,7 @@ export default function ClassCard({
         "
       >
         {/* Top: Class Info */}
-        <div>
+        <div >
           <h3 className="text-xl font-semibold text-white mb-1">
             {name}
           </h3>
