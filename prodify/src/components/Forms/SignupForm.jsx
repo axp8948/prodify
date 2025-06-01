@@ -49,20 +49,6 @@ export default function SignupForm({ values, onChange, onSubmit }) {
         />
       </div>
 
-      <div>
-        <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300">
-          Confirm Password
-        </label>
-        <input
-          id="confirmPassword"
-          name="confirmPassword"
-          type="password"
-          value={values.confirmPassword}
-          onChange={onChange}
-          placeholder="••••••••"
-          className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
-        />
-      </div>
 
       <Button type="submit" className="w-full">
         Sign Up

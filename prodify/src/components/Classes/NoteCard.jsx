@@ -1,80 +1,119 @@
-// src/components/NoteCard.jsx
-import React from 'react'
-import { Trash2 } from 'lucide-react'
+// src/components/Classes/NoteCard.jsx
+import React, { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Trash2, Edit2, Check, X } from 'lucide-react'
+import dayjs from 'dayjs'
 
+/**
+ * Props:
+ *   id: string
+ *   title: string
+ *   content: string
+ *   createdAt: string (ISO)
+ *   onDelete(id: string): void
+ *   onUpdate(id: string, newTitle: string, newContent: string): void
+ */
 export default function NoteCard({
   id,
   title,
   content,
   createdAt,
   onDelete,
+  onUpdate,
 }) {
-  // Format createdAt as “Jun 5, 2025 – 14:30”
-  const dateObj = new Date(createdAt)
-  const formattedDate =
-    dateObj.toLocaleDateString(undefined, {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    }) +
-    ' – ' +
-    dateObj.toLocaleTimeString(undefined, {
-      hour: '2-digit',
-      minute: '2-digit',
-    })
+  // Local state to toggle between display/edit mode
+  const [isEditing, setIsEditing] = useState(false)
+  const [draftTitle, setDraftTitle] = useState(title)
+  const [draftContent, setDraftContent] = useState(content)
 
-  // Show only the first 100 characters of content
-  const preview =
-    content.length > 100 ? content.slice(0, 100) + '…' : content
+  // If user cancels editing, revert drafts back to original props
+  const handleCancel = () => {
+    setDraftTitle(title)
+    setDraftContent(content)
+    setIsEditing(false)
+  }
+
+  // Save changes: call onUpdate, switch out of edit mode
+  const handleSave = () => {
+    // Don’t allow empty title
+    if (!draftTitle.trim()) return
+    onUpdate(id, draftTitle.trim(), draftContent.trim())
+    setIsEditing(false)
+  }
 
   return (
-    <div className="group relative">
-      {/* Glassmorphic card */}
-      <div
-        className="
-          bg-white/10 backdrop-blur-sm
-          p-5 rounded-lg shadow-md
-          hover:bg-white/20 hover:shadow-xl
-          transition transform duration-200 ease-out
-          flex flex-col justify-between
-        "
-      >
-        {/* Top: Note Info */}
-        <div>
-          <h3 className="text-lg font-semibold text-white mb-1">
-            {title}
-          </h3>
-          <p className="text-xs text-gray-400 mb-3">{formattedDate}</p>
-          <p className="text-gray-300 text-sm leading-snug">
-            {preview}
-          </p>
-        </div>
-
-        {/* Bottom: “Read More” link */}
-        <div className="mt-4">
-          <a
-            href="#"
-            className="text-blue-400 text-sm hover:underline"
-          >
-            Read More
-          </a>
-        </div>
+    <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 flex flex-col justify-between shadow-md">
+      {/** === Top Bar (Edit/Delete buttons) === */}
+      <div className="flex justify-end space-x-2">
+        {isEditing ? (
+          <>
+            <button
+              onClick={handleSave}
+              className="text-green-400 hover:text-green-500"
+              title="Save"
+            >
+              <Check className="w-5 h-5" />
+            </button>
+            <button
+              onClick={handleCancel}
+              className="text-gray-400 hover:text-gray-500"
+              title="Cancel"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              onClick={() => setIsEditing(true)}
+              className="text-blue-400 hover:text-blue-500"
+              title="Edit"
+            >
+              <Edit2 className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => onDelete(id)}
+              className="text-red-400 hover:text-red-500"
+              title="Delete"
+            >
+              <Trash2 className="w-5 h-5" />
+            </button>
+          </>
+        )}
       </div>
 
-      {/* Delete button (top-right corner) */}
-      <button
-        onClick={() => onDelete(id)}
-        className="
-          absolute top-2 right-2
-          p-2 rounded-full
-          bg-red-600 hover:bg-red-700
-          text-white
-          transition
-        "
-        aria-label={`Delete note ${title}`}
-      >
-        <Trash2 className="w-4 h-4" />
-      </button>
+      {/** === Content Area === */}
+      <div className="mt-2 flex-1">
+        {isEditing ? (
+          <>
+            <input
+              type="text"
+              value={draftTitle}
+              onChange={(e) => setDraftTitle(e.target.value)}
+              className="w-full bg-gray-800 text-white px-2 py-1 rounded mb-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Note title"
+            />
+            <textarea
+              value={draftContent}
+              onChange={(e) => setDraftContent(e.target.value)}
+              className="w-full h-24 bg-gray-800 text-white px-2 py-1 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              placeholder="Note content"
+            />
+          </>
+        ) : (
+          <>
+            <h3 className="text-lg font-semibold text-white">{title}</h3>
+            <p className="mt-1 text-gray-200 text-sm">{content}</p>
+          </>
+        )}
+      </div>
+
+      {/** === Footer: Created At === */}
+      {!isEditing && (
+        <div className="mt-4 text-gray-400 text-xs">
+          Created: {dayjs(createdAt).format('MMM D, YYYY h:mm A')}
+        </div>
+      )}
     </div>
   )
 }

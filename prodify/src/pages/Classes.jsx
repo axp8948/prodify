@@ -33,6 +33,8 @@ export default function Classes() {
     return (
         <div className="min-h-screen bg-[#0d1013]">
             {/* The Header itself comes from your Layout, so it’s not repeated here */}
+            
+
 
             <main className="pt-24 px-6 pb-12">
                 {/* Page Title & Add Button */}
@@ -81,6 +83,9 @@ export default function Classes() {
                             />
                         ))}
                     </div>
+
+                       
+
                 )}
             </main>
         </div>

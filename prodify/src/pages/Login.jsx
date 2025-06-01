@@ -2,24 +2,48 @@
 import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import LoginForm from '@/components/forms/LoginForm'
+import { authLogin } from '@/store/authSlice'
+import authService from '@/appwrite/auth'
+import { useDispatch } from 'react-redux'
 
 export default function Login() {
   useEffect(() => {
     document.documentElement.classList.add('dark')
   }, [])
 
-  const [values, setValues] = useState({ email: '', password: '' })
+  const dispatch = useDispatch();
 
-  const handleChange = (e) => {
-    const { name, value } = e.target
-    setValues((prev) => ({ ...prev, [name]: value }))
+  const [values, setValues] = useState({
+    email: '',
+    password: ''
+  })
+  
+  async function handleSubmit (e){
+    e.preventDefault();
+
+    // Call Appwrite for Login
+    try {
+      const session = await authService.login(values);
+      if(session){
+        const userData = await authService.getCurrentUser();
+
+        if(userData){
+          dispatch(authLogin(userData));
+        }
+      }
+    } catch (error) {
+      console.log("Error while logging the user to appwrite", error)
+    }
   }
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    // TODO: dispatch Redux login action
-    console.log('Logging in with', values)
+  function handleChange(e){
+    const {name, value} = e.target
+    setValues((prev) => ({
+      ...prev,
+      [name]: value,
+    }))
   }
+
 
   return (
     <div className="min-h-screen bg-gray-900 flex items-center justify-center px-4 py-12">

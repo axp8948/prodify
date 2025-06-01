@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import SignupForm from '@/components/forms/SignupForm'
+import authService from '@/appwrite/auth'
+import { useDispatch } from 'react-redux'
+import { authLogin } from '@/store/authSlice'
 
 export default function Signup() {
   // enforce dark mode
@@ -8,12 +11,14 @@ export default function Signup() {
     document.documentElement.classList.add('dark')
   }, [])
 
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
   // local form state
   const [values, setValues] = useState({
     fullName: '',
     email: '',
     password: '',
-    confirmPassword: '',
   })
 
   const handleChange = (e) => {
@@ -21,9 +26,32 @@ export default function Signup() {
     setValues((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    // TODO: dispatch Redux signup action
+
+    try {
+      const { fullName, email, password } = values;
+      const accountResult = await authService.createAccount({
+        name: fullName,
+        email,
+        password
+      });
+
+      if(accountResult){
+        const userData = await authService.getCurrentUser()
+        console.log("👤 currentUser:", userData);
+        
+        if(userData){
+          dispatch(authLogin(userData))
+          navigate("/");
+        }
+      }
+    } catch (error) {
+      console.log("Error while signing up the user to appwrite", error)
+    }
+
+
+
     console.log('Signing up with', values)
   }
 

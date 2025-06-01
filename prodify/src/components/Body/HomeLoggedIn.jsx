@@ -6,6 +6,10 @@ import FeatureCard from '../FeatureCard'
 import { BookOpen, DollarSign, Activity, ListCheck } from 'lucide-react'
 
 const HomeLoggedIn = () => {
+
+    const userData = useSelector(state => state.auth.userData);
+    const userName = userData?.name ?? '';
+
     useEffect(() => {
         // Ensure dark mode is enabled on <html>
         document.documentElement.classList.add('dark')
@@ -42,6 +46,8 @@ const HomeLoggedIn = () => {
         },
     ]
 
+
+
     return (
         <div className="min-h-screen bg-[#0d1013]">
 
@@ -53,7 +59,7 @@ const HomeLoggedIn = () => {
                 <div className="relative z-10 space-y-4">
                     {/* Gradient Heading */}
                     <h2 className="text-3xl lg:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-purple-500 to-orange-900">
-                        Welcome back, Anmol!
+                        Welcome back, {userName}!
                     </h2>
                     <p className="text-gray-300 text-xl">
                         You’ve spent <span className="font-semibold text-blue-400">12h 45m</span> tracking this week.

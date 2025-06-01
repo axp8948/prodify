@@ -1,52 +1,41 @@
-// src/components/ReminderCard.jsx
+// src/components/Classes/ReminderCard.jsx
 import React from 'react'
 import { Trash2 } from 'lucide-react'
+import dayjs from 'dayjs'
 
-export default function ReminderCard({ id, text, dueAt, onDelete }) {
-  // Format due date as “Jun 5, 2025 – 09:00”
-  const dateObj = new Date(dueAt)
-  const formattedDate =
-    dateObj.toLocaleDateString(undefined, {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    }) +
-    ' – ' +
-    dateObj.toLocaleTimeString(undefined, {
-      hour: '2-digit',
-      minute: '2-digit',
-    })
-
+/**
+ * Props:
+ *   id: string
+ *   title: string
+ *   description: string
+ *   dueAt: string (ISO)
+ *   onDelete(id: string): void
+ */
+export default function ReminderCard({
+  id,
+  title,
+  description,
+  dueAt,
+  onDelete,
+}) {
   return (
-    <div className="group relative">
-      <div
-        className="
-          bg-white/10 backdrop-blur-sm
-          p-5 rounded-lg shadow-md
-          hover:bg-white/20 hover:shadow-xl
-          transition transform duration-200 ease-out
-          flex flex-col justify-between
-        "
-      >
+    <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 flex flex-col justify-between shadow-md">
+      <div className="flex justify-between items-start">
         <div>
-          <p className="text-lg font-medium text-white mb-2">{text}</p>
-          <p className="text-xs text-gray-400">Due: {formattedDate}</p>
+          <h3 className="text-lg font-semibold text-white">{title}</h3>
+          <p className="mt-1 text-gray-200 text-sm">{description}</p>
         </div>
+        <button
+          onClick={() => onDelete(id)}
+          className="text-red-400 hover:text-red-500"
+          title="Delete"
+        >
+          <Trash2 className="w-5 h-5" />
+        </button>
       </div>
-
-      <button
-        onClick={() => onDelete(id)}
-        className="
-          absolute top-2 right-2
-          p-2 rounded-full
-          bg-red-600 hover:bg-red-700
-          text-white
-          transition
-        "
-        aria-label={`Delete reminder: ${text}`}
-      >
-        <Trash2 className="w-4 h-4" />
-      </button>
+      <div className="mt-4 text-gray-400 text-xs">
+        Due: {dayjs(dueAt).format('MMM D, YYYY')}
+      </div>
     </div>
   )
 }
