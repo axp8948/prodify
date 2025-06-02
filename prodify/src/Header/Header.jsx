@@ -3,8 +3,25 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import Clock from "../components/Clock"
+import { useDispatch } from 'react-redux'
+import authService from '@/appwrite/auth'
+import {authLogout} from "../store/authSlice"
 
 const Header = ({ isAuthenticated = false, onLogout }) => {
+
+  const dispatch = useDispatch();
+
+  function onLogout (){
+    authService
+      .logout()
+      .then(() => {
+      dispatch(authLogout())
+    }).catch(error => {
+      console.error("Failed to delete Appwrite session:", err);
+    })
+  
+  }
+
   return (
     <header className="sticky top-0 z-50 bg-[#0d1117] bg-opacity-70 backdrop-blur-md border-b border-gray-800 px-6 py-4">
       <div className="max-w-7xl mx-auto flex items-center justify-between">

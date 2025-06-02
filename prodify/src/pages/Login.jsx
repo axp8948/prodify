@@ -1,10 +1,10 @@
 // src/pages/Login.jsx
 import React, { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import LoginForm from '@/components/forms/LoginForm'
 import { authLogin } from '@/store/authSlice'
 import authService from '@/appwrite/auth'
-import { useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 
 export default function Login() {
   useEffect(() => {
@@ -12,11 +12,20 @@ export default function Login() {
   }, [])
 
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const isAuthenticated = useSelector(state => state.auth.isAuthenticated)
 
   const [values, setValues] = useState({
     email: '',
     password: ''
   })
+
+  // to make sure user is not ablt to visit /login if he is already logged in
+  useEffect(() => {
+    if(isAuthenticated){
+      navigate("/")
+    }
+  }, [isAuthenticated, navigate])
   
   async function handleSubmit (e){
     e.preventDefault();
@@ -29,7 +38,10 @@ export default function Login() {
 
         if(userData){
           dispatch(authLogin(userData));
+          navigate("/");
         }
+
+
       }
     } catch (error) {
       console.log("Error while logging the user to appwrite", error)
