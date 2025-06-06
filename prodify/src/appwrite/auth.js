@@ -6,7 +6,7 @@ export class AuthService {
     client = new Client();
     account;
 
-    constructor(){
+    constructor() {
         this.client
             .setEndpoint(conf.appwriteUrl)
             .setProject(conf.appwriteProjectId);
@@ -14,12 +14,12 @@ export class AuthService {
         this.account = new Account(this.client)
     }
 
-    async createAccount({email, password, name}) {
+    async createAccount({ email, password, name }) {
         try {
             const userAccount = await this.account.create(ID.unique(), email, password, name)
-            if(userAccount){
-               // call another method (login the user if the account is created successfully)
-               return this.login({email, password})
+            if (userAccount) {
+                // call another method (login the user if the account is created successfully)
+                return this.login({ email, password })
             } else {
                 return userAccount;
             }
@@ -29,13 +29,29 @@ export class AuthService {
         }
     }
 
-    async login({email, password}) {
+    async login({ email, password }) {
         try {
+            // 1. Check if there is an active session before trying to delete it
+            let hasSession = false;
+            try {
+                await this.account.get();
+                hasSession = true;
+            } catch {
+                // If get() throws, we know there is no active session (guest), so skip deleteSessions
+            }
+
+            if (hasSession) {
+                await this.account.deleteSessions();
+            }
+
+            // 2. Now create a fresh session
             return await this.account.createEmailPasswordSession(email, password);
         } catch (error) {
             throw error;
         }
     }
+
+
 
     async getCurrentUser() {
         try {

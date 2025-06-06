@@ -7,23 +7,32 @@ import Login from './pages/Login.jsx'
 import Signup from './pages/Signup.jsx'
 import Classes from './pages/Classes.jsx'
 import ClassDetail from './pages/ClassDetail.jsx'
+import JokesPage from './pages/Jokes.jsx'
+import ScrollToTop from './components/ScrollToTop.jsx'
+import DailyDose from './pages/DailyDose.jsx'
 // …other imports
 
 export default function App() {
   return (
-    <Routes>
-      {/* All routes share the same Layout */}
-      <Route element={<Layout />}>
-        <Route path="/"      element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup"element={<Signup />} />
-        <Route path="/classes"element={<Classes />} />
-        <Route path="classes/:classId" element={<ClassDetail />} />
+    <>
+      <ScrollToTop />
+      <Routes>
+        {/* All routes share the same Layout */}
+        <Route element={<Layout />}>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/classes" element={<Classes />} />
+          <Route path="classes/:classId" element={<ClassDetail />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/jokes" element={<JokesPage />} />
+          <Route path="/daily" element={<DailyDose />} />
 
-        
-        {/* add more child routes here */}
-      </Route>
-    </Routes>
+
+          {/* add more child routes here */}
+        </Route>
+      </Routes>
+    </>
   )
 }
 

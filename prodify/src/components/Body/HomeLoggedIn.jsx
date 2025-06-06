@@ -3,7 +3,7 @@ import React, { useEffect } from 'react'
 import { useSelector } from 'react-redux'
 import Header from '../../Header/Header'
 import FeatureCard from '../FeatureCard'
-import { BookOpen, DollarSign, Activity, ListCheck } from 'lucide-react'
+import { BookOpen, DollarSign, Activity, ListCheck, Icon, Laugh, BookOpenText, Sparkles } from 'lucide-react'
 
 const HomeLoggedIn = () => {
 
@@ -44,6 +44,21 @@ const HomeLoggedIn = () => {
             desc: 'Set reminders, checklists, and jot down quick notes.',
             iconClass: 'text-purple-400',
         },
+        {
+            name: 'Laugh Break',
+            Icon: Laugh,
+            to: '/jokes',
+            desc: 'Need a giggle? Dive into some quick humor to lift your spirits!',
+            iconClass: 'text-yellow-400'
+        },
+        {
+            name: 'Daily Dose',
+            Icon: Sparkles,
+            to: '/daily',
+            desc: 'Boost your day with a powerful word and an inspiring quote — all in one place.',
+            iconClass: 'text-gradient bg-gradient-to-r from-blue-400 to-orange-400 text-transparent bg-clip-text'
+        }
+
     ]
 
 
@@ -51,10 +66,10 @@ const HomeLoggedIn = () => {
     return (
         <div className="min-h-screen bg-[#0d1013]">
 
-                 {/* Welcome Hero */}
+            {/* Welcome Hero */}
             <div className="relative px-6 py-16  text-center">
                 {/* Frosted‐glass behind text */}
-               <div className="absolute inset-x-0 top-16 mx-auto w-11/12 max-w-3xl bg-white/5 backdrop-blur-sm rounded-xl"></div>
+                <div className="absolute inset-x-0 top-16 mx-auto w-11/12 max-w-3xl bg-white/5 backdrop-blur-sm rounded-xl"></div>
 
                 <div className="relative z-10 space-y-4">
                     {/* Gradient Heading */}
@@ -70,7 +85,7 @@ const HomeLoggedIn = () => {
             {/* Main content */}
             <main className="pt-24 px-6 pb-12">
                 <h1 className="text-3xl lg:text-4xl font-extrabold text-white text-center mb-8">
-                    Welcome back! What would you like to track today?
+                    Hey {userName}, what’s the game plan today?
                 </h1>
 
                 <div className="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">

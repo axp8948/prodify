@@ -11,7 +11,9 @@ export default function ClassCard({
   onDelete,
 }) {
   // Normalize the courseCode for URL (e.g. "CS3330" → "cs3330")
-  const normalizedId = courseCode.toLowerCase()
+  const normalizedId = name
+    .toLowerCase()
+    .replace(/\s+/g, "");
 
   return (
     <div className="group relative">
