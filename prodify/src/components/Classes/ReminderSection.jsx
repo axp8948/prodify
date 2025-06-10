@@ -1,70 +1,96 @@
 // src/components/Classes/RemindersSection.jsx
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, X } from "lucide-react";
-import ReminderCard from "./ReminderCard";
 import dayjs from "dayjs";
 
-export default function RemindersSection({ classId }) {
-  // ─── 1) Local state: list of reminders ────────────────────────────────────
-  const [reminders, setReminders] = useState([
-    {
-      id: "r1",
-      title: "Review Lecture 2",
-      description: "Go over slides and examples before Friday class.",
-      dueAt: "2025-06-05T09:00:00Z",
-    },
-    {
-      id: "r2",
-      title: "Submit Homework 2",
-      description: "Make sure to upload PDF by next Monday night.",
-      dueAt: "2025-06-08T23:59:00Z",
-    },
-  ]);
+import ReminderCard from "./ReminderCard";
+import remindersService from "@/appwrite/classReminderServices";
+import authService from "@/appwrite/auth";
 
-  // ─── 2) UI state for filter/search ─────────────────────────────────────────
-  const [searchTerm, setSearchTerm] = useState("");
+export default function RemindersSection({ classId }) {
+  // ─── state ────────────────────────────────────────────────────────────────
+  const [reminders, setReminders]       = useState([]);
+  const [loading, setLoading]           = useState(true);
+  const [searchTerm, setSearchTerm]     = useState("");
   const [showOnlyUpcoming, setShowOnlyUpcoming] = useState(false);
 
-  // ─── 3) UI state for “Add Reminder” modal ───────────────────────────────────
+  // modal form state
   const [showForm, setShowForm] = useState(false);
   const [titleInput, setTitleInput] = useState("");
-  const [descInput, setDescInput] = useState("");
-  const [dateInput, setDateInput] = useState(dayjs().format("YYYY-MM-DD"));
+  const [descInput, setDescInput]   = useState("");
+  const [dateInput, setDateInput]   = useState(dayjs().format("YYYY-MM-DD"));
 
-  // ─── 4) Compute: filtered reminders based on search & upcoming toggle ──────
+  // ─── fetch existing reminders on mount or classId change ─────────────────
+  useEffect(() => {
+    const fetchReminders = async () => {
+      setLoading(true);
+      try {
+        const user = await authService.getCurrentUser();
+        const resp = await remindersService.listReminders(user.$id, classId);
+        // map Appwrite documents into our local shape
+        setReminders(
+          resp.documents.map((doc) => ({
+            id:           doc.$id,
+            title:        doc.title,
+            description:  doc.description,
+            dueAt:        doc.reminderAt,
+            isCompleted:  doc.isCompleted,
+          }))
+        );
+      } catch (err) {
+        console.error("Failed to fetch reminders:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (classId) fetchReminders();
+  }, [classId]);
+
+  // ─── filtered reminders / search / upcoming toggle ────────────────────────
   const filteredReminders = useMemo(() => {
     const now = dayjs();
     return reminders.filter((r) => {
-      // 4a) If “Upcoming Only” is checked, skip past dates
       if (showOnlyUpcoming && dayjs(r.dueAt).isBefore(now, "day")) {
         return false;
       }
-      // 4b) If searchTerm exists, match in title or description or formatted date
       if (searchTerm.trim()) {
-        const lower = searchTerm.toLowerCase();
+        const q = searchTerm.toLowerCase();
         return (
-          r.title.toLowerCase().includes(lower) ||
-          r.description.toLowerCase().includes(lower) ||
+          r.title.toLowerCase().includes(q) ||
+          r.description.toLowerCase().includes(q) ||
           dayjs(r.dueAt)
             .format("MMM D, YYYY")
             .toLowerCase()
-            .includes(lower)
+            .includes(q)
         );
       }
       return true;
     });
   }, [reminders, searchTerm, showOnlyUpcoming]);
 
-  // ─── 5) Handlers: Add, Delete ──────────────────────────────────────────────
-  const handleDeleteReminder = (remId) => {
-    setReminders((prev) => prev.filter((r) => r.id !== remId));
+  // ─── handlers: delete & toggle complete ───────────────────────────────────
+  const handleDeleteReminder = async (id) => {
+    const ok = await remindersService.deleteReminder(id);
+    if (ok) setReminders((prev) => prev.filter((r) => r.id !== id));
   };
 
-  // ─── 6) Toggle “Add Reminder” modal ────────────────────────────────────────
+  const handleToggleComplete = async (id, current) => {
+    const updated = await remindersService.updateReminder(id, {
+      isCompleted: !current,
+    });
+    if (updated) {
+      setReminders((prev) =>
+        prev.map((r) =>
+          r.id === id ? { ...r, isCompleted: updated.isCompleted } : r
+        )
+      );
+    }
+  };
+
+  // ─── handlers: modal open/close ──────────────────────────────────────────
   const toggleForm = () => {
-    // Prevent background scroll when modal is open
     if (!showForm) {
       document.body.classList.add("overflow-hidden");
     } else {
@@ -76,38 +102,44 @@ export default function RemindersSection({ classId }) {
     setDateInput(dayjs().format("YYYY-MM-DD"));
   };
 
-  // ─── 7) Handle modal form submission to add a new reminder ────────────────
-  const handleFormSubmit = (e) => {
+  // ─── handler: submit new reminder ────────────────────────────────────────
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
-    // Basic validation: title and date are required
     if (!titleInput.trim() || !dateInput) return;
 
-    // Build a new reminder object
-    const newId = `r${reminders.length + 1}`;
-    // Convert dateInput (YYYY-MM-DD) to ISO string at 09:00 local time
-    const isoDate = dayjs(dateInput).hour(9).minute(0).second(0).toISOString();
+    const user = await authService.getCurrentUser();
+    const isoDate = dayjs(dateInput)
+      .hour(9)
+      .minute(0)
+      .second(0)
+      .toISOString();
 
-    const newReminder = {
-      id: newId,
-      title: titleInput.trim(),
+    const doc = await remindersService.createReminder({
+      userId:      user.$id,
+      classId,
+      title:       titleInput.trim(),
       description: descInput.trim(),
-      dueAt: isoDate,
-    };
-
-    setReminders((prev) => [newReminder, ...prev]);
-
-    // Reset and hide modal
-    toggleForm();
-  };
-
-  // ─── 8) Handle modal cancellation ──────────────────────────────────────────
-  const handleFormCancel = () => {
-    toggleForm();
+      reminderAt:  isoDate,
+      isCompleted: false,
+    });
+    if (doc) {
+      setReminders((prev) => [
+        {
+          id:           doc.$id,
+          title:        doc.title,
+          description:  doc.description,
+          dueAt:        doc.reminderAt,
+          isCompleted:  doc.isCompleted,
+        },
+        ...prev,
+      ]);
+      toggleForm();
+    }
   };
 
   return (
     <section className="bg-[#1f2937] rounded-lg shadow-md flex flex-col relative">
-      {/* ─── Header ──────────────────────────────────────────────────────────── */}
+      {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-gray-600">
         <h2 className="text-2xl font-semibold text-white">Reminders</h2>
         <Button
@@ -119,7 +151,7 @@ export default function RemindersSection({ classId }) {
         </Button>
       </div>
 
-      {/* ─── Body: Search + Upcoming Toggle ───────────────────────────────────── */}
+      {/* Search & Toggle */}
       <div className="p-6 flex-1 flex flex-col">
         <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:space-x-4">
           <input
@@ -140,15 +172,17 @@ export default function RemindersSection({ classId }) {
           </label>
         </div>
 
-        {/* ─── No Results or Grid of Cards ─────────────────────────────────── */}
-        {filteredReminders.length === 0 ? (
-          <p className="text-gray-400">
+        {/* Loading / Empty / List */}
+        {loading ? (
+          <div className="text-gray-400 px-6 py-8">Loading reminders…</div>
+        ) : filteredReminders.length === 0 ? (
+          <div className="text-gray-400 px-6 py-8">
             {searchTerm || showOnlyUpcoming
               ? "No reminders match your filters."
               : "No reminders yet. Click “Add Reminder” to create one."}
-          </p>
+          </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-2 gap-6 overflow-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 overflow-auto p-6">
             {filteredReminders.map((r) => (
               <ReminderCard
                 key={r.id}
@@ -156,18 +190,21 @@ export default function RemindersSection({ classId }) {
                 title={r.title}
                 description={r.description}
                 dueAt={r.dueAt}
-                onDelete={handleDeleteReminder}
+                isCompleted={r.isCompleted}
+                onDelete={() => handleDeleteReminder(r.id)}
+                onToggleComplete={() =>
+                  handleToggleComplete(r.id, r.isCompleted)
+                }
               />
             ))}
           </div>
         )}
       </div>
 
-      {/* ─── Modal Overlay ────────────────────────────────────────────────────── */}
+      {/* Modal */}
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="bg-[#2a2f36] w-11/12 max-w-md p-6 rounded-lg shadow-xl">
-            {/* Modal Header */}
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-semibold text-white">
                 Add New Reminder
@@ -180,8 +217,6 @@ export default function RemindersSection({ classId }) {
                 <X className="w-5 h-5" />
               </button>
             </div>
-
-            {/* Modal Form */}
             <form onSubmit={handleFormSubmit} className="space-y-4">
               <div>
                 <label htmlFor="reminderTitle" className="block text-gray-300 mb-1">
@@ -193,7 +228,6 @@ export default function RemindersSection({ classId }) {
                   value={titleInput}
                   onChange={(e) => setTitleInput(e.target.value)}
                   className="w-full px-4 py-2 bg-gray-800 text-white rounded focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                  placeholder="Enter reminder title"
                   required
                 />
               </div>
@@ -226,7 +260,7 @@ export default function RemindersSection({ classId }) {
               <div className="flex justify-end space-x-3">
                 <button
                   type="button"
-                  onClick={handleFormCancel}
+                  onClick={toggleForm}
                   className="px-4 py-2 bg-gray-700 text-gray-200 rounded-lg hover:bg-gray-600"
                 >
                   Cancel

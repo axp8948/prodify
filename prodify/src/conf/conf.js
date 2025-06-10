@@ -5,7 +5,8 @@ const conf = {
     appwriteCollectionId: String(import.meta.env.VITE_APPWRITE_COLLECTION_ID),
     appwriteBucketId: String(import.meta.env.VITE_APPWRITE_BUCKET_ID),
     appwriteClassesCollectionId: String(import.meta.env.VITE_APPWRITE_COLLECTION_CLASSES_ID),
-    appwriteNotesCollectionId: String(import.meta.env.VITE_APPWRITE_COLLECTION_CLASSNOTES_ID)
+    appwriteNotesCollectionId: String(import.meta.env.VITE_APPWRITE_COLLECTION_CLASSNOTES_ID),
+    appwriteReminderCollectionId: String(import.meta.env.VITE_APPWRITE_COLLECTION_CLASSREMINDERS_ID),
 }
 
 
