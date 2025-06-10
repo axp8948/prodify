@@ -1,48 +1,36 @@
 // src/components/ClassCard.jsx
-import React from 'react'
-import { Link } from 'react-router-dom'
-import { Trash2 } from 'lucide-react'
+import React from "react";
+import { Link } from "react-router-dom";
+import { Trash2 } from "lucide-react";
 
-export default function ClassCard({
-  id,
-  name,
-  instructor,
-  courseCode,
-  onDelete,
-}) {
-  // Normalize the courseCode for URL (e.g. "CS3330" → "cs3330")
-  const normalizedId = name
-    .toLowerCase()
-    .replace(/\s+/g, "");
+export default function ClassCard({ name, onDelete }) {
+  // Normalize the route segment (e.g. "CS 3310" → "cs3310")
+  const normalizedId = name.toLowerCase().replace(/\s+/g, "");
 
   return (
-    <div className="group relative">
-      {/* 1) Entire card is clickable and navigates to /classes/{normalizedId} */}
+    <div className="relative group">
+      {/* Entire card is clickable */}
       <Link
         to={`/classes/${normalizedId}`}
         className="
-          block 
-          bg-white/10 backdrop-blur-sm    /* glassy background */
-          p-6 rounded-lg shadow-md
-          hover:bg-white/20 hover:shadow-xl
+          bg-gradient-to-br from-[#1f2937] to-[#111827]
+          min-h-[150px]
+          flex items-center justify-center
+          p-6
+          rounded-xl
+          shadow-lg
+          hover:shadow-2xl
           transition transform duration-200 ease-out
+          hover:scale-[1.02]
         "
       >
-        {/* Top: Class Info */}
-        <div >
-          <h3 className="text-xl font-semibold text-white mb-1">
-            {name}
-          </h3>
-          {courseCode && (
-            <p className="text-sm text-gray-300 mb-2">{courseCode}</p>
-          )}
-          {instructor && (
-            <p className="text-gray-400">Instructor: {instructor}</p>
-          )}
-        </div>
+        {/* Only the class name, using Prodify accent color */}
+        <h3 className="text-2xl font-bold text-blue-400 text-center">
+          {name}
+        </h3>
       </Link>
 
-      {/* 2) Delete button sits “above” the link (in top-right corner) */}
+      {/* Delete button in top-right corner */}
       <button
         onClick={onDelete}
         className="
@@ -57,5 +45,5 @@ export default function ClassCard({
         <Trash2 className="w-5 h-5" />
       </button>
     </div>
-  )
+  );
 }

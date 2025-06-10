@@ -1,6 +1,6 @@
 // src/components/Header.jsx
 import React from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import Clock from "../components/Clock"
 import { useDispatch } from 'react-redux'
@@ -10,12 +10,14 @@ import {authLogout} from "../store/authSlice"
 const Header = ({ isAuthenticated = false, onLogout }) => {
 
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   function onLogout (){
     authService
       .logout()
       .then(() => {
       dispatch(authLogout())
+      navigate("/")
     }).catch(error => {
       console.error("Failed to delete Appwrite session:", err);
     })
