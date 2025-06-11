@@ -10,6 +10,7 @@ import ClassDetail from './pages/ClassDetail.jsx'
 import JokesPage from './pages/Jokes.jsx'
 import ScrollToTop from './components/ScrollToTop.jsx'
 import DailyDose from './pages/DailyDose.jsx'
+import General from './pages/General.jsx'
 // …other imports
 
 export default function App() {
@@ -27,6 +28,7 @@ export default function App() {
           <Route path="/signup" element={<Signup />} />
           <Route path="/jokes" element={<JokesPage />} />
           <Route path="/daily" element={<DailyDose />} />
+          <Route path="/general" element={<General />} />
 
 
           {/* add more child routes here */}
