@@ -13,9 +13,9 @@ const colors    = ["bg-yellow-200","bg-pink-200","bg-green-200","bg-blue-200"];
 const rotations = ["rotate-1","-rotate-1","rotate-2","-rotate-2","rotate-3"];
 
 export default function QuickNotesSection() {
-  const [notes, setNotes] = useState(initialNotes);
-  const [adding, setAdding] = useState(false);
-  const [draft, setDraft] = useState("");
+  const [notes, setNotes]     = useState(initialNotes);
+  const [adding, setAdding]   = useState(false);
+  const [draft, setDraft]     = useState("");
 
   const handleAdd = (e) => {
     e.preventDefault();
@@ -23,10 +23,10 @@ export default function QuickNotesSection() {
     if (!text) return;
     const now = new Date();
     const formatted = now.toLocaleString("en-US", {
-      month: "short",
-      day: "2-digit",
-      year: "numeric",
-      hour: "numeric",
+      month:  "short",
+      day:    "2-digit",
+      year:   "numeric",
+      hour:   "numeric",
       minute: "2-digit",
     });
     setNotes([{ id: `n${Date.now()}`, text, createdAt: formatted }, ...notes]);
@@ -46,7 +46,8 @@ export default function QuickNotesSection() {
         {!adding && (
           <button
             onClick={() => setAdding(true)}
-            className="p-2 bg-blue-600 rounded-full hover:bg-blue-700"
+            className="p-2 bg-blue-600 rounded-full hover:bg-blue-700 transition"
+            aria-label="Add note"
           >
             <Plus className="w-5 h-5 text-white" />
           </button>
@@ -66,17 +67,14 @@ export default function QuickNotesSection() {
           <div className="flex justify-end space-x-2">
             <button
               type="button"
-              onClick={() => {
-                setAdding(false);
-                setDraft("");
-              }}
-              className="px-3 py-1 bg-gray-700 text-gray-200 rounded-lg"
+              onClick={() => { setAdding(false); setDraft(""); }}
+              className="px-3 py-1 bg-gray-700 text-gray-200 rounded-lg hover:bg-gray-600 transition"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              className="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
             >
               Save
             </button>
@@ -84,16 +82,16 @@ export default function QuickNotesSection() {
         </form>
       )}
 
-      {/* Notes Carousel */}
+      {/* Notes Grid */}
       {notes.length === 0 ? (
         <p className="text-gray-400">No notes yet. Add one above.</p>
       ) : (
-        <div className="flex space-x-4 overflow-x-auto pb-2">
-          {notes.slice(0, 5).map((note, idx) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {notes.map((note, idx) => (
             <div
               key={note.id}
               className={`
-                relative w-48 min-w-[12rem] p-4
+                relative w-full p-5
                 ${colors[idx % colors.length]}
                 ${rotations[idx % rotations.length]}
                 shadow-lg transform hover:scale-105 transition
