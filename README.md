@@ -38,11 +38,11 @@ Then open `http://localhost:5173` in your browser.
 
 ## 🖼️ Screenshots
 
-![Homepage](./homepage.png)
-![Dashboard](./homepage_signedin.png)
-![My Day](./general.png)
-![Class Tracker](./classes.png)
-![Graph Visualization](./graphs.png)
+![Homepage](./screenshots/homepage.png)
+![Dashboard](./screenshots/homepage_signedin.png)
+![My Day](./screenshots/general.png)
+![Class Tracker](./screenshots/classes.png)
+![Graph Visualization](./screenshots/graphs.png)
 
 ---
 
