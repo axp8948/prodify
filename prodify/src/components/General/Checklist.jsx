@@ -1,32 +1,75 @@
 // src/components/General/ChecklistSection.jsx
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSelector } from "react-redux";
 import { CheckCircle, Circle, Trash2, Plus } from "lucide-react";
+import generalTasksService from "@/appwrite/generalTasksServices";
 
 export default function ChecklistSection() {
-  const [tasks, setTasks]     = useState([
-    { id: "t1", text: "Review project proposal", isCompleted: false },
-    { id: "t2", text: "Buy groceries",            isCompleted: true  },
-    { id: "t3", text: "Call Mom",                  isCompleted: false },
-  ]);
-  const [newText, setNewText] = useState("");
-  const [adding, setAdding]   = useState(false);
+  // Grab the authenticated user from Redux (your slice stores it as `userData`)
+  const currentUser = useSelector((state) => state.auth.userData);
 
-  const handleAdd = e => {
+  // Appwrite returns the ID field as `$id`
+  const userId = currentUser?.$id;
+
+  const [tasks, setTasks] = useState([]);
+  const [newText, setNewText] = useState("");
+  const [adding, setAdding] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch tasks once when we know the userId
+  useEffect(() => {
+    if (!userId) {
+      // no user → skip and clear loading so you see "no tasks"
+      setLoading(false);
+      return;
+    }
+    (async () => {
+      setLoading(true);
+      try {
+        const res = await generalTasksService.listTasks(userId, 100);
+        setTasks(res.documents);
+      } catch (err) {
+        console.error("Failed to load tasks:", err);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [userId]);
+
+  const handleAdd = async (e) => {
     e.preventDefault();
     const text = newText.trim();
-    if (!text) return;
-    setTasks([{ id: `t${Date.now()}`, text, isCompleted: false }, ...tasks]);
-    setNewText("");
-    setAdding(false);
+    if (!text || !userId) return;
+
+    try {
+      const doc = await generalTasksService.createTask({ userId, text });
+      setTasks((prev) => [doc, ...prev]);
+      setNewText("");
+      setAdding(false);
+    } catch (err) {
+      console.error("Failed to add task:", err);
+    }
   };
 
-  const toggleTask = id => {
-    setTasks(tasks.map(t => t.id === id ? { ...t, isCompleted: !t.isCompleted } : t));
+  const toggleTask = async (id, current) => {
+    try {
+      const updated = await generalTasksService.updateTask(id, {
+        isCompleted: !current,
+      });
+      setTasks((prev) => prev.map((t) => (t.$id === id ? updated : t)));
+    } catch (err) {
+      console.error("Failed to toggle task:", err);
+    }
   };
 
-  const removeTask = id => {
-    setTasks(tasks.filter(t => t.id !== id));
+  const removeTask = async (id) => {
+    try {
+      await generalTasksService.deleteTask(id);
+      setTasks((prev) => prev.filter((t) => t.$id !== id));
+    } catch (err) {
+      console.error("Failed to delete task:", err);
+    }
   };
 
   return (
@@ -51,14 +94,17 @@ export default function ChecklistSection() {
           <input
             type="text"
             value={newText}
-            onChange={e => setNewText(e.target.value)}
+            onChange={(e) => setNewText(e.target.value)}
             placeholder="What’s next…"
             className="w-full bg-gray-800 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
           <div className="flex justify-end space-x-2">
             <button
               type="button"
-              onClick={() => { setAdding(false); setNewText(""); }}
+              onClick={() => {
+                setAdding(false);
+                setNewText("");
+              }}
               className="px-3 py-1 bg-gray-700 text-gray-200 rounded-lg hover:bg-gray-600 transition"
             >
               Cancel
@@ -73,20 +119,24 @@ export default function ChecklistSection() {
         </form>
       )}
 
-      {/* Task List */}
-      {tasks.length === 0 ? (
+      {/* Loading / Empty States */}
+      {loading ? (
+        <p className="text-gray-400">Loading tasks…</p>
+      ) : tasks.length === 0 ? (
         <p className="text-gray-400">No tasks yet. Add one above.</p>
       ) : (
         <ul className="space-y-1">
           {tasks.map((t, idx) => (
             <li
-              key={t.id}
-              className={`flex items-center justify-between p-3 rounded-lg transition
+              key={t.$id}
+              className={`
+                flex items-center justify-between p-3 rounded-lg transition
                 ${idx % 2 === 0 ? "bg-gray-900/50" : "bg-gray-800/50"}
-                hover:bg-gray-900`}
+                hover:bg-gray-900
+              `}
             >
               <button
-                onClick={() => toggleTask(t.id)}
+                onClick={() => toggleTask(t.$id, t.isCompleted)}
                 className="flex items-center space-x-2 focus:outline-none"
               >
                 {t.isCompleted ? (
@@ -105,7 +155,7 @@ export default function ChecklistSection() {
                 </span>
               </button>
               <button
-                onClick={() => removeTask(t.id)}
+                onClick={() => removeTask(t.$id)}
                 className="text-red-500 hover:text-red-600 focus:outline-none"
                 aria-label="Delete task"
               >
@@ -119,7 +169,9 @@ export default function ChecklistSection() {
       {/* View All Link */}
       <div className="mt-4 text-right">
         <button
-          onClick={() => {/* navigate to full tasks page */}}
+          onClick={() => {
+            /* navigate to full tasks page */
+          }}
           className="text-sm text-indigo-400 hover:text-indigo-300 transition"
         >
           View All Tasks →

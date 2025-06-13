@@ -1,41 +1,64 @@
 // src/components/General/QuickNotesSection.jsx
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSelector } from "react-redux";
 import { Plus, Trash2 } from "lucide-react";
-
-const initialNotes = [
-  { id: "n1", text: "Brainstorm new app ideas", createdAt: "Jun 10, 2025 2:30 PM" },
-  { id: "n2", text: "Buy gift for Sarah",            createdAt: "Jun 09, 2025 9:15 AM" },
-  { id: "n3", text: "Read 20 pages of novel",         createdAt: "Jun 08, 2025 8:45 PM" },
-];
-
+import generalNotesService from "@/appwrite/generalNotesServices"
 const colors    = ["bg-yellow-200","bg-pink-200","bg-green-200","bg-blue-200"];
 const rotations = ["rotate-1","-rotate-1","rotate-2","-rotate-2","rotate-3"];
 
 export default function QuickNotesSection() {
-  const [notes, setNotes]     = useState(initialNotes);
-  const [adding, setAdding]   = useState(false);
-  const [draft, setDraft]     = useState("");
+  // get the logged-in user from Redux
+  const currentUser = useSelector((s) => s.auth.userData);
+  const userId      = currentUser?.$id;
 
-  const handleAdd = (e) => {
+  const [notes,   setNotes]   = useState([]);
+  const [adding,  setAdding]  = useState(false);
+  const [draft,   setDraft]   = useState("");
+  const [loading, setLoading] = useState(true);
+
+  // load notes from Appwrite when userId is available
+  useEffect(() => {
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
+    (async () => {
+      setLoading(true);
+      try {
+        const res = await generalNotesService.listNotes(userId, 100);
+        setNotes(res.documents);
+      } catch (err) {
+        console.error("Failed to load notes:", err);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [userId]);
+
+  const handleAdd = async (e) => {
     e.preventDefault();
     const text = draft.trim();
-    if (!text) return;
-    const now = new Date();
-    const formatted = now.toLocaleString("en-US", {
-      month:  "short",
-      day:    "2-digit",
-      year:   "numeric",
-      hour:   "numeric",
-      minute: "2-digit",
-    });
-    setNotes([{ id: `n${Date.now()}`, text, createdAt: formatted }, ...notes]);
-    setDraft("");
-    setAdding(false);
+    if (!text || !userId) return;
+
+    try {
+      const doc = await generalNotesService.createNote({ userId, text });
+      // doc has $id, text, createdAt
+      setNotes((prev) => [doc, ...prev]);
+      setDraft("");
+      setAdding(false);
+    } catch (err) {
+      console.error("Failed to add note:", err);
+    }
   };
 
-  const handleDelete = (id) => {
-    setNotes(notes.filter((n) => n.id !== id));
+  const handleDelete = async (id) => {
+    try {
+      await generalNotesService.deleteNote(id);
+      setNotes((prev) => prev.filter((n) => n.$id !== id));
+    } catch (err) {
+      console.error("Failed to delete note:", err);
+    }
   };
 
   return (
@@ -82,14 +105,16 @@ export default function QuickNotesSection() {
         </form>
       )}
 
-      {/* Notes Grid */}
-      {notes.length === 0 ? (
+      {/* Loading / Empty States */}
+      {loading ? (
+        <p className="text-gray-400">Loading notes…</p>
+      ) : notes.length === 0 ? (
         <p className="text-gray-400">No notes yet. Add one above.</p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {notes.map((note, idx) => (
             <div
-              key={note.id}
+              key={note.$id}
               className={`
                 relative w-full p-5
                 ${colors[idx % colors.length]}
@@ -99,7 +124,7 @@ export default function QuickNotesSection() {
             >
               {/* Delete Button */}
               <button
-                onClick={() => handleDelete(note.id)}
+                onClick={() => handleDelete(note.$id)}
                 className="absolute top-2 right-2 text-gray-600 hover:text-gray-800"
                 aria-label="Delete note"
               >
@@ -110,7 +135,15 @@ export default function QuickNotesSection() {
               <p className="text-gray-900 whitespace-pre-wrap">{note.text}</p>
 
               {/* Timestamp */}
-              <div className="mt-2 text-xs text-gray-700">{note.createdAt}</div>
+              <div className="mt-2 text-xs text-gray-700">
+                {new Date(note.$createdAt).toLocaleString("en-US", {
+                  month: "short",
+                  day:   "2-digit",
+                  year:  "numeric",
+                  hour:  "numeric",
+                  minute:"2-digit",
+                })}
+              </div>
             </div>
           ))}
         </div>
