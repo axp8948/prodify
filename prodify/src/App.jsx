@@ -11,6 +11,8 @@ import JokesPage from './pages/Jokes.jsx'
 import ScrollToTop from './components/ScrollToTop.jsx'
 import DailyDose from './pages/DailyDose.jsx'
 import General from './pages/General.jsx'
+import Finance from './pages/Finance.jsx'
+import PhysicalActivities from './pages/PhysicalActivities.jsx'
 // …other imports
 
 export default function App() {
@@ -29,6 +31,8 @@ export default function App() {
           <Route path="/jokes" element={<JokesPage />} />
           <Route path="/daily" element={<DailyDose />} />
           <Route path="/general" element={<General />} />
+          <Route path="/finance" element={<Finance />} />
+          <Route path="/activities" element={<PhysicalActivities />} />
 
 
           {/* add more child routes here */}

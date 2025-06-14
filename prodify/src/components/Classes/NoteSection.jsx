@@ -8,14 +8,13 @@ import authService from "@/appwrite/auth";
 import dayjs from "dayjs";
 
 export default function NotesSection({ classId }) {
-  const [notes, setNotes]       = useState([]);
-  const [loading, setLoading]   = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [newTitle, setNewTitle] = useState("");
+  const [notes, setNotes]         = useState([]);
+  const [loading, setLoading]     = useState(true);
+  const [showForm, setShowForm]   = useState(false);
+  const [newTitle, setNewTitle]   = useState("");
   const [newContent, setNewContent] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
 
-  // 1) Fetch notes on mount (and whenever classId changes)
   useEffect(() => {
     const fetchNotes = async () => {
       setLoading(true);
@@ -27,7 +26,6 @@ export default function NotesSection({ classId }) {
     fetchNotes();
   }, [classId]);
 
-  // 2) Filtered list for search
   const filtered = useMemo(() => {
     if (!searchTerm.trim()) return notes;
     const q = searchTerm.toLowerCase();
@@ -38,29 +36,22 @@ export default function NotesSection({ classId }) {
     );
   }, [notes, searchTerm]);
 
-  // 3) Handlers
-  const handleAdd = () => {
-    setShowForm(true);
-    setNewTitle("");
-    setNewContent("");
-  };
+  const handleAdd    = () => { setShowForm(true); setNewTitle(""); setNewContent(""); };
   const handleCancel = () => setShowForm(false);
-
   const handleSaveNew = async (e) => {
     e.preventDefault();
     const user = await authService.getCurrentUser();
     const doc = await notesService.createNote({
-      userId:   user.$id,
+      userId:  user.$id,
       classId,
-      title:    newTitle.trim(),
-      content:  newContent.trim(),
+      title:   newTitle.trim(),
+      content: newContent.trim(),
     });
     if (doc) {
       setNotes((prev) => [doc, ...prev]);
       setShowForm(false);
     }
   };
-
   const handleUpdate = async (id, title, content) => {
     const updated = await notesService.updateNote(id, { title, content });
     if (updated) {
@@ -69,28 +60,26 @@ export default function NotesSection({ classId }) {
       );
     }
   };
-
   const handleDelete = async (id) => {
     const ok = await notesService.deleteNote(id);
     if (ok) setNotes((prev) => prev.filter((n) => n.$id !== id));
   };
 
   return (
-    <section className="bg-[#1f2937] rounded-lg shadow-md flex flex-col relative">
+    <section className="bg-white/10 backdrop-blur-sm rounded-lg p-6 shadow-md">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-gray-600">
+      <div className="flex items-center justify-between mb-4">
         <h2 className="text-2xl font-semibold text-white">Notes</h2>
         <Button
           onClick={handleAdd}
           className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1"
         >
-          <Plus className="w-4 h-4" />
-          <span>Add Note</span>
+          <Plus className="w-4 h-4" /><span>Add Note</span>
         </Button>
       </div>
 
       {/* Search */}
-      <div className="p-6">
+      <div className="mb-6">
         <input
           type="text"
           placeholder="Search notes…"
@@ -100,20 +89,21 @@ export default function NotesSection({ classId }) {
         />
       </div>
 
-      {/* Loading / Empty State */}
+      {/* Loading / Empty */}
       {loading ? (
-        <div className="px-6 py-8 text-gray-400">Loading notes…</div>
+        <p className="text-gray-400">Loading notes…</p>
       ) : filtered.length === 0 ? (
-        <div className="px-6 py-8 text-gray-400">
+        <p className="text-gray-400">
           {searchTerm
             ? "No notes match your search."
             : "No notes yet. Click “Add Note” to create one."}
-        </div>
+        </p>
       ) : (
-        <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-6 overflow-auto">
-          {filtered.map((n) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filtered.map((n, idx) => (
             <NoteCard
               key={n.$id}
+              index={idx}
               id={n.$id}
               title={n.title}
               content={n.content}
@@ -171,5 +161,5 @@ export default function NotesSection({ classId }) {
         </div>
       )}
     </section>
-  );
+);
 }
