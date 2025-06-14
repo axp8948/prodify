@@ -64,3 +64,39 @@ body {
   @apply bg-gray-900;
 }
 }
+
+/* Flip-card container */
+.flip-card {
+  perspective: 1000px;
+  position: relative;
+}
+
+/* Inner wrapper becomes a single-cell grid */
+.flip-card-inner {
+  display: grid;              /* enable grid overlap */
+  transition: transform 0.6s; /* smooth flip */
+  transform-style: preserve-3d;
+}
+
+/* When the parent has .flipped, rotate the inner */
+.flip-card.flipped .flip-card-inner {
+  transform: rotateY(180deg);
+}
+
+/* Both faces share the same grid cell */
+.flip-card-front,
+.flip-card-back {
+  grid-area: 1 / 1 / 2 / 2;   /* overlap them */
+  backface-visibility: hidden;
+}
+
+/* Back face flipped by default */
+.flip-card-back {
+  transform: rotateY(180deg);
+}
+/* also flip when the INNER element has .flipped */
+.flip-card-inner.flipped,
+.flip-card.flipped .flip-card-inner {
+  transform: rotateY(180deg);
+}
+
