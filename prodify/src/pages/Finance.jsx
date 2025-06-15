@@ -11,30 +11,74 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { DollarSign, CreditCard } from "lucide-react";
+import dayjs from "dayjs";
+import { useSelector } from "react-redux";
 
 import IncomeSection from "../components/Finance/IncomeSection";
 import ExpensesSection from "../components/Finance/ExpensesSection";
-import dayjs from "dayjs";
+import IncomePieChart from "../components/Finance/IncomePieChart";
+import ExpensePieChart from "../components/Finance/ExpensesPieChart";
+import IncomeService from "../appwrite/financeIncomesServices";
+import ExpenseService from "../appwrite/financeExpensesServices";
 
 export default function Finance() {
-  const [selectedTab, setSelectedTab] = useState(0);
+  const userData = useSelector((state) => state.auth.userData);
+  const userId   = userData?.$id;
+
+  const [selectedTab, setSelectedTab]   = useState(0);
   const [overviewData, setOverviewData] = useState([]);
+  const [incomeByCat, setIncomeByCat]   = useState([]);
+  const [expenseByCat, setExpenseByCat] = useState([]);
 
-  // dummy 7-day data; replace with real fetch/aggregation
   useEffect(() => {
-    const days = Array.from({ length: 7 }).map((_, i) => {
-      const d = dayjs().subtract(6 - i, "day");
-      return {
-        date:    d.format("MMM D"),
-        income:  parseFloat((Math.random() * 200).toFixed(2)),
-        expense: parseFloat((Math.random() * 150).toFixed(2)),
-      };
-    });
-    setOverviewData(days);
-  }, []);
+    if (!userId) return;
 
-  const totalIncome  = overviewData.reduce((sum, d) => sum + d.income,  0);
-  const totalExpense = overviewData.reduce((sum, d) => sum + d.expense, 0);
+    const fetchData = async () => {
+      try {
+        const incRes = await IncomeService.listIncomes(userId, 1000);
+        const expRes = await ExpenseService.listExpenses(userId, 1000);
+        const incomes  = incRes.documents;
+        const expenses = expRes.documents;
+
+        // 7-day bar chart
+        const days = Array.from({ length: 7 }).map((_, i) =>
+          dayjs().subtract(6 - i, "day")
+        );
+        const ovData = days.map((d) => {
+          const dateKey = d.format("MMM D");
+          const income  = incomes
+            .filter((doc) => dayjs(doc.$createdAt).isSame(d, "day"))
+            .reduce((sum, doc) => sum + doc.amount, 0);
+          const expense = expenses
+            .filter((doc) => dayjs(doc.$createdAt).isSame(d, "day"))
+            .reduce((sum, doc) => sum + doc.amount, 0);
+          return { date: dateKey, income, expense };
+        });
+        setOverviewData(ovData);
+
+        // aggregate by category
+        const incMap = incomes.reduce((acc, d) => {
+          acc[d.category] = (acc[d.category] || 0) + d.amount;
+          return acc;
+        }, {});
+        const expMap = expenses.reduce((acc, d) => {
+          acc[d.category] = (acc[d.category] || 0) + d.amount;
+          return acc;
+        }, {});
+
+        setIncomeByCat(
+          Object.entries(incMap).map(([name, value]) => ({ name, value }))
+        );
+        setExpenseByCat(
+          Object.entries(expMap).map(([name, value]) => ({ name, value }))
+        );
+      } catch (err) {
+        console.error("Failed to load finance data:", err);
+      }
+    };
+
+    fetchData();
+  }, [userId]);
 
   const sections = [
     {
@@ -42,7 +86,6 @@ export default function Finance() {
       title:        "Income",
       icon:         DollarSign,
       gradientClass:"bg-gradient-to-r from-green-500 to-green-700",
-      value:        `$${totalIncome.toFixed(2)}`,
       component:    <IncomeSection />,
       tabIndex:     1,
     },
@@ -51,7 +94,6 @@ export default function Finance() {
       title:        "Expenses",
       icon:         CreditCard,
       gradientClass:"bg-gradient-to-r from-red-500 to-red-700",
-      value:        `$${totalExpense.toFixed(2)}`,
       component:    <ExpensesSection />,
       tabIndex:     2,
     },
@@ -78,7 +120,11 @@ export default function Finance() {
             <SummaryCard
               key={sec.key}
               title={sec.title}
-              value={sec.value}
+              value={
+                sec.key === "income"
+                  ? `$${overviewData.reduce((s, d) => s + d.income, 0).toFixed(2)}`
+                  : `$${overviewData.reduce((s, d) => s + d.expense, 0).toFixed(2)}`
+              }
               icon={sec.icon}
               gradientClass={sec.gradientClass}
               isActive={selectedTab === sec.tabIndex}
@@ -106,34 +152,41 @@ export default function Finance() {
 
         {/* Content */}
         <div className="space-y-6">
-          {/* Overview Chart */}
+          {/* Overview */}
           {selectedTab === 0 && (
-            <div className="bg-gray-800/50 backdrop-blur-md p-6 rounded-2xl">
-              <ResponsiveContainer width="100%" height={300}>
-                <ComposedChart data={overviewData}>
-                  <CartesianGrid stroke="#444" />
-                  <XAxis dataKey="date" stroke="#888" />
-                  <YAxis stroke="#888" />
-                  <Tooltip />
-                  <Legend />
-                  <Bar
-                    dataKey="income"
-                    name="Income"
-                    fill="#22c55e"
-                    barSize={20}
-                  />
-                  <Bar
-                    dataKey="expense"
-                    name="Expenses"
-                    fill="#ef4444"
-                    barSize={20}
-                  />
-                </ComposedChart>
-              </ResponsiveContainer>
+            <div className="space-y-6">
+              <div className="bg-gray-800/50 backdrop-blur-md p-6 rounded-2xl">
+                <ResponsiveContainer width="100%" height={300}>
+                  <ComposedChart data={overviewData}>
+                    <CartesianGrid stroke="#444" />
+                    <XAxis dataKey="date" stroke="#888" />
+                    <YAxis stroke="#888" />
+                    <Tooltip />
+                    <Legend />
+                    <Bar
+                      dataKey="income"
+                      name="Income"
+                      fill="#22c55e"
+                      barSize={20}
+                    />
+                    <Bar
+                      dataKey="expense"
+                      name="Expenses"
+                      fill="#ef4444"
+                      barSize={20}
+                    />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <IncomePieChart data={incomeByCat} />
+                <ExpensePieChart data={expenseByCat} />
+              </div>
             </div>
           )}
 
-          {/* Income / Expense Forms */}
+          {/* Income / Expense Sections */}
           {sections.map(
             (sec) =>
               selectedTab === sec.tabIndex && (
