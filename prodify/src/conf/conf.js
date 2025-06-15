@@ -12,6 +12,9 @@ const conf = {
     appwriteGeneralTasksCollectionId: String(import.meta.env.VITE_APPWRITE_COLLECTION_GENERAL_TASKS_ID),
     appwriteGeneralNotesCollectionId: String(import.meta.env.VITE_APPWRITE_COLLECTION_GENERAL_NOTES_ID),
     appwriteGeneralRemindersCollectionId: String(import.meta.env.VITE_APPWRITE_COLLECTION_GENERAL_REMINDERS_ID),
+    appwriteFinanceExpensesCollectionId: String(import.meta.env.VITE_APPWRITE_COLLECTION_FINANCE_EXPENSES_ID),
+    appwriteFinanceIncomesCollectionId: String(import.meta.env.VITE_APPWRITE_COLLECTION_FINANCE_INCOMES_ID),
+
 
 }
 
