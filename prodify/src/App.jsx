@@ -13,6 +13,7 @@ import DailyDose from './pages/DailyDose.jsx'
 import General from './pages/General.jsx'
 import Finance from './pages/Finance.jsx'
 import PhysicalActivities from './pages/PhysicalActivities.jsx'
+import Prodix from './pages/Prodix.jsx'
 // …other imports
 
 export default function App() {
@@ -33,6 +34,7 @@ export default function App() {
           <Route path="/general" element={<General />} />
           <Route path="/finance" element={<Finance />} />
           <Route path="/activities" element={<PhysicalActivities />} />
+          <Route path="/prodix" element={<Prodix />} />
 
 
           {/* add more child routes here */}

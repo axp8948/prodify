@@ -3,7 +3,7 @@ import React, { useEffect } from 'react'
 import { useSelector } from 'react-redux'
 import Header from '../../Header/Header'
 import FeatureCard from '../FeatureCard'
-import { BookOpen, DollarSign, Activity, ListCheck, Icon, Laugh, BookOpenText, Sparkles } from 'lucide-react'
+import { BookOpen, DollarSign, Activity, ListCheck, Icon, Laugh, BookOpenText, Sparkles, MessagesSquare } from 'lucide-react'
 
 const HomeLoggedIn = () => {
 
@@ -57,6 +57,13 @@ const HomeLoggedIn = () => {
             to: '/daily',
             desc: 'Boost your day with a powerful word and an inspiring quote — all in one place.',
             iconClass: 'text-gradient bg-gradient-to-r from-blue-400 to-orange-400 text-transparent bg-clip-text'
+        },
+        {
+            name: "Prodix",
+            Icon: MessagesSquare,
+            to: "/prodix",
+            desc: "Chat with Prodix for personalized insights on your tasks, progress, reminders and more—your AI productivity companion.",
+            iconClass: "text-gradient bg-gradient-to-r from-emerald-400 to-lime-400 text-transparent bg-clip-text"
         }
 
     ]
