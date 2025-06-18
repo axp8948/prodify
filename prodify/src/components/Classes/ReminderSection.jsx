@@ -109,7 +109,7 @@ export default function RemindersSection({ classId }) {
   };
 
   return (
-    <section className="bg-white/10 backdrop-blur-sm rounded-lg p-6 shadow-md">
+    <section className="bg-gray-800/30 backdrop-blur-sm rounded-lg p-6 shadow-md">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-semibold text-white">Reminders</h2>

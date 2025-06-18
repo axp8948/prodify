@@ -1,16 +1,51 @@
 // src/components/PhysicalActivities/GymCheckinSection.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSelector } from "react-redux";
 import { Card, CardHeader, CardContent } from "../ui/card";
 import { MapPin } from "lucide-react";
 import dayjs from "dayjs";
+import PhysicalGymCheckinsService from "../../appwrite/physicalGymCheckInsServices";
 
 export default function GymCheckinSection() {
-  const [entries, setEntries] = useState([]);
-  const today = dayjs().format("MMM D, YYYY");
+  const userData = useSelector((state) => state.auth.userData);
+  const userId   = userData?.$id;
+  const [entries, setEntries] = useState([]); // [{ id, date }]
+  const todayStr = dayjs().format("MMM D, YYYY");
 
-  const handleCheckin = () => {
-    if (entries[0] !== today) {
-      setEntries([today, ...entries]);
+  // load previous check-ins
+  useEffect(() => {
+    if (!userId) return;
+    (async () => {
+      try {
+        const res = await PhysicalGymCheckinsService.listCheckins(userId, 50);
+        const docs = res.documents || [];
+        const loaded = docs.map(doc => ({
+          id:   doc.$id,
+          date: dayjs(doc.$createdAt).format("MMM D, YYYY"),
+        }));
+        // sort descending by createdAt
+        loaded.sort((a, b) =>
+          dayjs(b.date, "MMM D, YYYY").unix() - dayjs(a.date, "MMM D, YYYY").unix()
+        );
+        setEntries(loaded);
+      } catch (err) {
+        console.error("Failed to load check-ins:", err);
+      }
+    })();
+  }, [userId]);
+
+  // handle new check-in
+  const handleCheckin = async () => {
+    if (!userId || entries[0]?.date === todayStr) return;
+    try {
+      const created = await PhysicalGymCheckinsService.createCheckin({ userId });
+      const newEntry = {
+        id:   created.$id,
+        date: dayjs(created.$createdAt).format("MMM D, YYYY"),
+      };
+      setEntries(prev => [newEntry, ...prev]);
+    } catch (err) {
+      console.error("Failed to create check-in:", err);
     }
   };
 
@@ -22,13 +57,18 @@ export default function GymCheckinSection() {
       </CardHeader>
       <CardContent>
         <div className="flex flex-col md:flex-row gap-6">
-          {/* Form / Button on left */}
+          {/* Button on left */}
           <div className="md:w-1/2">
             <button
               onClick={handleCheckin}
-              className="w-full py-2 rounded-xl bg-amber-600 hover:bg-amber-700 transition text-white font-medium"
+              disabled={entries[0]?.date === todayStr}
+              className={`w-full py-2 rounded-xl transition font-medium
+                ${entries[0]?.date === todayStr
+                  ? "bg-gray-600 text-gray-300 cursor-not-allowed"
+                  : "bg-amber-600 hover:bg-amber-700 text-white"
+                }`}
             >
-              {entries[0] === today ? "Checked In ✓" : "Check In Today"}
+              {entries[0]?.date === todayStr ? "Checked In ✓" : "Check In Today"}
             </button>
           </div>
           {/* History on right */}
@@ -37,12 +77,12 @@ export default function GymCheckinSection() {
               {entries.length === 0 ? (
                 <li className="text-gray-400">No check-ins logged yet.</li>
               ) : (
-                entries.map((d, i) => (
+                entries.map(({ id, date }) => (
                   <li
-                    key={i}
+                    key={id}
                     className="bg-gray-700/60 p-3 rounded-lg text-gray-200"
                   >
-                    {d}
+                    {date}
                   </li>
                 ))
               )}
@@ -51,5 +91,5 @@ export default function GymCheckinSection() {
         </div>
       </CardContent>
     </Card>
-);
+  );
 }

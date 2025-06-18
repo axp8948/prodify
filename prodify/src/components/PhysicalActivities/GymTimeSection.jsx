@@ -1,19 +1,72 @@
 // src/components/PhysicalActivities/GymTimeSection.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSelector } from "react-redux";
 import { Card, CardHeader, CardContent } from "../ui/card";
 import { Clock } from "lucide-react";
 import dayjs from "dayjs";
+import PhysicalGymDurationService from "../../appwrite/physicalGymDurationServices";
 
 export default function GymTimeSection() {
-  const [entries, setEntries] = useState([]);
+  const userData = useSelector((state) => state.auth.userData);
+  const userId   = userData?.$id;
+
+  const [entries, setEntries] = useState([]); // { id, date, duration }
   const [hours, setHours]     = useState("");
   const [minutes, setMinutes] = useState("");
 
-  const handleAdd = () => {
-    if (!hours && !minutes) return;
-    const date = dayjs().format("MMM D, YYYY");
-    setEntries([{ date, duration: `${hours||0}h ${minutes||0}m` }, ...entries]);
-    setHours(""); setMinutes("");
+  // load existing durations
+  useEffect(() => {
+    if (!userId) return;
+    (async () => {
+      try {
+        const res = await PhysicalGymDurationService.listDurations(userId, 50);
+        const docs = res.documents || [];
+        const loaded = docs.map((doc) => {
+          const mins = doc.duration;
+          const h = Math.floor(mins / 60);
+          const m = mins % 60;
+          return {
+            id:       doc.$id,
+            date:     dayjs(doc.$createdAt).format("MMM D, YYYY"),
+            duration: `${h}h ${m}m`,
+          };
+        });
+        // sort newest first
+        loaded.sort((a, b) =>
+          dayjs(b.date, "MMM D, YYYY").unix() - dayjs(a.date, "MMM D, YYYY").unix()
+        );
+        setEntries(loaded);
+      } catch (err) {
+        console.error("Failed to load durations:", err);
+      }
+    })();
+  }, [userId]);
+
+  // handle new duration
+  const handleAdd = async () => {
+    const h = parseInt(hours) || 0;
+    const m = parseInt(minutes) || 0;
+    const totalMins = h * 60 + m;
+    if (!userId || totalMins === 0) return;
+
+    try {
+      const created = await PhysicalGymDurationService.createDuration({
+        userId,
+        duration: totalMins,
+      });
+      const ch = Math.floor(created.duration / 60);
+      const cm = created.duration % 60;
+      const entry = {
+        id:       created.$id,
+        date:     dayjs(created.$createdAt).format("MMM D, YYYY"),
+        duration: `${ch}h ${cm}m`,
+      };
+      setEntries((prev) => [entry, ...prev]);
+      setHours("");
+      setMinutes("");
+    } catch (err) {
+      console.error("Failed to add duration:", err);
+    }
   };
 
   return (
@@ -31,7 +84,7 @@ export default function GymTimeSection() {
               min="0"
               placeholder="Hours"
               value={hours}
-              onChange={e => setHours(e.target.value)}
+              onChange={(e) => setHours(e.target.value)}
               className="w-full px-3 py-2 rounded-xl bg-gray-700 text-white placeholder-gray-400 focus:outline-none"
             />
             <input
@@ -39,7 +92,7 @@ export default function GymTimeSection() {
               min="0"
               placeholder="Minutes"
               value={minutes}
-              onChange={e => setMinutes(e.target.value)}
+              onChange={(e) => setMinutes(e.target.value)}
               className="w-full px-3 py-2 rounded-xl bg-gray-700 text-white placeholder-gray-400 focus:outline-none"
             />
             <button
@@ -55,9 +108,9 @@ export default function GymTimeSection() {
               {entries.length === 0 ? (
                 <li className="text-gray-400">No durations logged yet.</li>
               ) : (
-                entries.map((e, i) => (
+                entries.map((e) => (
                   <li
-                    key={i}
+                    key={e.id}
                     className="flex justify-between bg-gray-700/60 p-3 rounded-lg text-gray-200"
                   >
                     <span>{e.date}</span>
@@ -70,5 +123,5 @@ export default function GymTimeSection() {
         </div>
       </CardContent>
     </Card>
-);
+  );
 }

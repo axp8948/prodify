@@ -14,6 +14,10 @@ const conf = {
     appwriteGeneralRemindersCollectionId: String(import.meta.env.VITE_APPWRITE_COLLECTION_GENERAL_REMINDERS_ID),
     appwriteFinanceExpensesCollectionId: String(import.meta.env.VITE_APPWRITE_COLLECTION_FINANCE_EXPENSES_ID),
     appwriteFinanceIncomesCollectionId: String(import.meta.env.VITE_APPWRITE_COLLECTION_FINANCE_INCOMES_ID),
+    appwritePhysicalGymCheckInsCollectionId: String(import.meta.env.VITE_APPWRITE_COLLECTION_PHYSICAL_GYM_CHECKIN_ID),
+    appwritePhysicalGymDurationCollectionId: String(import.meta.env.VITE_APPWRITE_COLLECTION_PHYSICAL_GYM_DURATION_ID),
+    appwritePhysicalStepsCollectionId: String(import.meta.env.VITE_APPWRITE_COLLECTION_PHYSICAL_STEPS_ID),
+    appwritePhysicalOtherCollectionId: String(import.meta.env.VITE_APPWRITE_COLLECTION_PHYSICAL_OTHER_ID),
 
 
 }
