@@ -1,25 +1,47 @@
 // src/components/Prodix/ProdixWidgetExpanded.jsx
 import React, { useState, useEffect, useRef } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import {
   MessageSquare as ChatIcon,
   User as UserIcon,
   Bot as BotAvatarIcon,
+  Loader2 as SpinnerIcon,
 } from "lucide-react";
+import authService from "../../appwrite/auth";
 
 export default function ProdixWidgetExpanded() {
   const [messages, setMessages] = useState([
     { sender: "bot", text: "Welcome back, Anmol! 🎉 Ready to conquer today’s goals?" },
   ]);
   const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [summary, setSummary] = useState("");
   const textareaRef = useRef(null);
   const endRef = useRef(null);
 
-  // Auto–scroll on new messages
+  // scroll to bottom on new messages
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Auto–resize textarea
+  // fetch context once
+  useEffect(() => {
+    (async () => {
+      try {
+        const { jwt } = await authService.createJWT();
+        const resp = await fetch("/api/context", {
+          headers: { Authorization: `Bearer ${jwt}` },
+        });
+        const { summary } = await resp.json();
+        setSummary(summary);
+      } catch (err) {
+        console.error("Failed to load context:", err);
+      }
+    })();
+  }, []);
+
+  // auto‐resize textarea
   const handleInputChange = (e) => {
     setInput(e.target.value);
     const ta = textareaRef.current;
@@ -27,21 +49,36 @@ export default function ProdixWidgetExpanded() {
     ta.style.height = `${ta.scrollHeight}px`;
   };
 
-  const sendMessage = () => {
+  const sendMessage = async () => {
     const txt = input.trim();
-    if (!txt) return;
+    if (!txt || loading) return;
+
     setMessages((prev) => [...prev, { sender: "user", text: txt }]);
     setInput("");
-    // reset height
     textareaRef.current.style.height = "auto";
+    setLoading(true);
 
-    // mock bot reply
-    setTimeout(() => {
+    try {
+      const { jwt } = await authService.createJWT();
+      const resp = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${jwt}`,
+        },
+        body: JSON.stringify({ message: txt, summary }),
+      });
+      const { reply } = await resp.json();
+      setMessages((prev) => [...prev, { sender: "bot", text: reply }]);
+    } catch (err) {
+      console.error("Chat error:", err);
       setMessages((prev) => [
         ...prev,
-        { sender: "bot", text: "👍 Got it! I'm on it…" },
+        { sender: "bot", text: "😞 Oops! Something went wrong. Please try again." },
       ]);
-    }, 800);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -55,14 +92,12 @@ export default function ProdixWidgetExpanded() {
           </h3>
         </header>
 
-        {/* Chat window (auto-growing) */}
+        {/* Chat log */}
         <div className="space-y-6 mb-8 px-4">
           {messages.map((m, i) => (
             <div
               key={i}
-              className={`flex items-start ${
-                m.sender === "bot" ? "justify-start" : "justify-end"
-              }`}
+              className={`flex items-start ${m.sender === "bot" ? "justify-start" : "justify-end"}`}
             >
               {m.sender === "bot" && (
                 <BotAvatarIcon className="w-8 h-8 text-emerald-400 mr-4 mt-1" />
@@ -74,43 +109,54 @@ export default function ProdixWidgetExpanded() {
                     : "bg-blue-50 text-blue-800 ml-auto"
                 }`}
               >
-                {m.text}
+                <div className="prose prose-sm m-0 p-0 break-words">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {m.text}
+                  </ReactMarkdown>
+                </div>
               </div>
               {m.sender === "user" && (
                 <UserIcon className="w-8 h-8 text-blue-400 ml-4 mt-1" />
               )}
             </div>
           ))}
+
+          {loading && (
+            <div className="flex items-start animate-pulse">
+              <BotAvatarIcon className="w-8 h-8 text-emerald-400 mr-4 mt-1" />
+              <div className="max-w-[85%] p-6 rounded-3xl shadow-md bg-emerald-50 text-emerald-800">
+                <SpinnerIcon className="w-6 h-6 animate-spin inline-block mr-2" />
+                Prodix is typing…
+              </div>
+            </div>
+          )}
           <div ref={endRef} />
         </div>
 
-        {/* Input area with auto-growing textarea */}
+        {/* Input */}
         <div className="flex items-end space-x-4 border-t pt-6">
           <textarea
             ref={textareaRef}
             rows={1}
             value={input}
             onChange={handleInputChange}
-            onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && (e.preventDefault(), sendMessage())}
+            onKeyDown={(e) =>
+              e.key === "Enter" && !e.shiftKey && (e.preventDefault(), sendMessage())
+            }
+            disabled={loading}
             placeholder="Type your message…"
-            className="
-              flex-1 resize-none bg-white dark:bg-gray-700
-              border border-gray-300 dark:border-gray-600
-              rounded-2xl px-6 py-3
-              focus:outline-none focus:ring-2 focus:ring-emerald-400
-              placeholder-gray-400
-            "
+            className="flex-1 resize-none bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-2xl px-6 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-400 placeholder-gray-400"
           />
           <button
             onClick={sendMessage}
-            className="
-              p-4 bg-gradient-to-r from-emerald-400 to-lime-500
-              rounded-2xl shadow-lg
-              hover:from-emerald-500 hover:to-lime-600
-              transition
-            "
+            disabled={loading}
+            className="p-4 bg-gradient-to-r from-emerald-400 to-lime-500 rounded-2xl shadow-lg hover:from-emerald-500 hover:to-lime-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <ChatIcon className="w-6 h-6 text-white" />
+            {loading ? (
+              <SpinnerIcon className="w-6 h-6 text-white animate-spin" />
+            ) : (
+              <ChatIcon className="w-6 h-6 text-white" />
+            )}
           </button>
         </div>
       </div>

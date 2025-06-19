@@ -1,3 +1,5 @@
+//auth.js
+
 import conf from "../conf/conf.js";
 
 import { Client, Account, ID } from "appwrite";
@@ -70,6 +72,20 @@ export class AuthService {
             console.log("Appwrite service :: logout :: error", error)
         }
     }
+
+    /**
+   * Generates a one-time JWT for the currently logged-in user.
+   * Your server will use this to authenticate /api/chat calls.
+   */
+  async createJWT() {
+    try {
+      const result = await this.account.createJWT();
+      return result; // { jwt: "..." }
+    } catch (error) {
+      console.error("AuthService.createJWT error", error);
+      throw error;
+    }
+  }
 }
 
 const authService = new AuthService();
