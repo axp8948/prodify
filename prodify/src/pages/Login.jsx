@@ -1,61 +1,58 @@
-// src/pages/Login.jsx
-import React, { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import LoginForm from '@/components/forms/LoginForm'
-import { authLogin } from '@/store/authSlice'
-import authService from '@/appwrite/auth'
-import { useDispatch, useSelector } from 'react-redux'
+import React, { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import LoginForm from '@/components/forms/LoginForm';
+import { authLogin } from '@/store/authSlice';
+import authService from '@/appwrite/auth';
+import { useDispatch, useSelector } from 'react-redux';
 
 export default function Login() {
-  useEffect(() => {
-    document.documentElement.classList.add('dark')
-  }, [])
-
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const isAuthenticated = useSelector(state => state.auth.isAuthenticated)
+  const isAuthenticated = useSelector(state => state.auth.isAuthenticated);
 
-  const [values, setValues] = useState({
-    email: '',
-    password: ''
-  })
+  const [values, setValues] = useState({ email: '', password: '' });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  // to make sure user is not ablt to visit /login if he is already logged in
   useEffect(() => {
-    if(isAuthenticated){
-      navigate("/")
-    }
-  }, [isAuthenticated, navigate])
-  
-  async function handleSubmit (e){
-    e.preventDefault();
+    document.documentElement.classList.add('dark');
+  }, []);
 
-    // Call Appwrite for Login
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/');
+    }
+  }, [isAuthenticated, navigate]);
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
     try {
       const session = await authService.login(values);
-      if(session){
+      if (session) {
         const userData = await authService.getCurrentUser();
-
-        if(userData){
+        if (userData) {
           dispatch(authLogin(userData));
-          navigate("/");
+          navigate('/');
         }
-
-
       }
-    } catch (error) {
-      console.log("Error while logging the user to appwrite", error)
+    } catch (err) {
+      if (err?.message?.toLowerCase().includes("invalid credentials") || err?.code === 401) {
+        setError("Incorrect email or password.");
+      } else {
+        setError("Failed to sign in. Please try again later.");
+      }
+    } finally {
+      setLoading(false);
     }
   }
 
-  function handleChange(e){
-    const {name, value} = e.target
-    setValues((prev) => ({
-      ...prev,
-      [name]: value,
-    }))
+  function handleChange(e) {
+    const { name, value } = e.target;
+    setValues(prev => ({ ...prev, [name]: value }));
   }
-
 
   return (
     <div className="min-h-screen bg-gray-900 flex items-center justify-center px-4 py-12">
@@ -64,7 +61,13 @@ export default function Login() {
           Sign in to your account
         </h2>
 
-        <LoginForm values={values} onChange={handleChange} onSubmit={handleSubmit} />
+        <LoginForm
+          values={values}
+          onChange={handleChange}
+          onSubmit={handleSubmit}
+          loading={loading}
+          error={error}
+        />
 
         <p className="mt-4 text-sm text-center text-gray-400">
           Don’t have an account?{' '}
@@ -74,5 +77,5 @@ export default function Login() {
         </p>
       </div>
     </div>
-  )
+  );
 }

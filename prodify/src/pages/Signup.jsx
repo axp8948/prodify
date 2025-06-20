@@ -1,33 +1,42 @@
-import React, { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import SignupForm from '@/components/forms/SignupForm'
-import authService from '@/appwrite/auth'
-import { useDispatch } from 'react-redux'
-import { authLogin } from '@/store/authSlice'
+import React, { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import SignupForm from '@/components/forms/SignupForm';
+import authService from '@/appwrite/auth';
+import { useDispatch } from 'react-redux';
+import { authLogin } from '@/store/authSlice';
 
 export default function Signup() {
-  // enforce dark mode
   useEffect(() => {
-    document.documentElement.classList.add('dark')
-  }, [])
+    document.documentElement.classList.add('dark');
+  }, []);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  // local form state
   const [values, setValues] = useState({
     fullName: '',
     email: '',
     password: '',
-  })
+  });
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleChange = (e) => {
-    const { name, value } = e.target
-    setValues((prev) => ({ ...prev, [name]: value }))
-  }
+    const { name, value } = e.target;
+    setValues((prev) => ({ ...prev, [name]: value }));
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
+    setError('');
+
+    if (values.password.length < 8) {
+      setError('Password must be at least 8 characters long.');
+      return;
+    }
+
+    setLoading(true);
 
     try {
       const { fullName, email, password } = values;
@@ -37,23 +46,20 @@ export default function Signup() {
         password
       });
 
-      if(accountResult){
-        const userData = await authService.getCurrentUser()
-        console.log("👤 currentUser:", userData);
-        
-        if(userData){
-          dispatch(authLogin(userData))
-          navigate("/");
+      if (accountResult) {
+        const userData = await authService.getCurrentUser();
+        if (userData) {
+          dispatch(authLogin(userData));
+          navigate('/');
         }
       }
-    } catch (error) {
-      console.log("Error while signing up the user to appwrite", error)
+    } catch (err) {
+      setError('Signup failed. Please check your details or try again later.');
+      console.error('Error while signing up:', err);
+    } finally {
+      setLoading(false);
     }
-
-
-
-    console.log('Signing up with', values)
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gray-900 flex items-center justify-center px-4 py-12">
@@ -66,6 +72,8 @@ export default function Signup() {
           values={values}
           onChange={handleChange}
           onSubmit={handleSubmit}
+          loading={loading}
+          error={error}
         />
 
         <p className="mt-4 text-sm text-center text-gray-400">
@@ -76,5 +84,5 @@ export default function Signup() {
         </p>
       </div>
     </div>
-  )
+  );
 }

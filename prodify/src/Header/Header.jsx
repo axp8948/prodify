@@ -38,12 +38,12 @@ const Header = ({ isAuthenticated = false, onLogout }) => {
             <Link to="/" className="text-gray-300 hover:text-white transition">
               Home
             </Link>
-            <Link to="/features" className="text-gray-300 hover:text-white transition">
+            {/* <Link to="/features" className="text-gray-300 hover:text-white transition">
               Features
             </Link>
             <Link to="/about" className="text-gray-300 hover:text-white transition">
               About
-            </Link>
+            </Link> */}
           </nav>
 
           {/* Authentication Buttons */}
@@ -59,6 +59,7 @@ const Header = ({ isAuthenticated = false, onLogout }) => {
                   Sign Up
                 </Button>
               </Link>
+
             </>
           ) : (
             <Button
@@ -67,6 +68,8 @@ const Header = ({ isAuthenticated = false, onLogout }) => {
             >
               Log Out
             </Button>
+
+          
           )}
 
           <div className="flex items-center justify-center">

@@ -55,14 +55,14 @@ const HomeNotLoggedIn = () => {
               Get Started
             </Button>
           </Link>
-          <Link to="/learn-more">
+          {/* <Link to="/learn-more">
             <Button
               variant="outline"
               className="px-8 py-3 rounded-full border border-gray-400 text-gray-400 hover:bg-gray-700 hover:text-white"
             >
               Learn More
             </Button>
-          </Link>
+          </Link> */}
         </div>
       </div>
 
@@ -73,7 +73,9 @@ const HomeNotLoggedIn = () => {
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
           {features.map((f) => (
-            <FeatureCard key={f.name} {...f} />
+            <FeatureCard key={f.name} {...f} 
+            clickable={false}
+            />
           ))}
         </div>
       </section>

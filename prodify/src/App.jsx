@@ -35,6 +35,7 @@ export default function App() {
           <Route path="/finance" element={<Finance />} />
           <Route path="/activities" element={<PhysicalActivities />} />
           <Route path="/prodix" element={<Prodix />} />
+        
 
 
           {/* add more child routes here */}

@@ -1,9 +1,14 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 
-export default function FeatureCard({ name, Icon, to, desc, iconClass }) {
+export default function FeatureCard({ name, Icon, to, desc, iconClass, clickable = true }) {
+
+    const handleClick = (e) => {
+    if (!clickable) e.preventDefault();
+  };
+
   return (
-    <Link to={to} className="group h-full">
+    <Link to={to}  onClick={handleClick} className="group h-full">
       <div
         className="
           h-full flex flex-col justify-between

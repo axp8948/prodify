@@ -1,7 +1,7 @@
-import React from 'react'
-import { Button } from '@/components/ui/button'
+import React from 'react';
+import { Button } from '@/components/ui/button';
 
-export default function SignupForm({ values, onChange, onSubmit }) {
+export default function SignupForm({ values, onChange, onSubmit, loading, error }) {
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <div>
@@ -49,10 +49,13 @@ export default function SignupForm({ values, onChange, onSubmit }) {
         />
       </div>
 
+      {error && (
+        <p className="text-red-500 text-sm mt-2 text-center">{error}</p>
+      )}
 
-      <Button type="submit" className="w-full">
-        Sign Up
+      <Button type="submit" className="w-full" disabled={loading}>
+        {loading ? 'Creating Account...' : 'Sign Up'}
       </Button>
     </form>
-  )
+  );
 }

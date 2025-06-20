@@ -1,8 +1,7 @@
-// src/components/forms/LoginForm.jsx
-import React from 'react'
-import { Button } from '@/components/ui/button'
+import React from 'react';
+import { Button } from '@/components/ui/button';
 
-export default function LoginForm({ values, onChange, onSubmit }) {
+export default function LoginForm({ values, onChange, onSubmit, loading, error }) {
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <div>
@@ -35,9 +34,13 @@ export default function LoginForm({ values, onChange, onSubmit }) {
         />
       </div>
 
-      <Button type="submit" className="w-full">
-        Sign In
+      {error && (
+        <p className="text-red-500 text-sm mt-2 text-center">{error}</p>
+      )}
+
+      <Button type="submit" className="w-full" disabled={loading}>
+        {loading ? 'Signing In...' : 'Sign In'}
       </Button>
     </form>
-  )
+  );
 }
