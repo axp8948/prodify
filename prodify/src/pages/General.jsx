@@ -1,43 +1,18 @@
 // src/components/General/GeneralDashboard.jsx
-
-
-import React, { useRef, useState } from "react";
-import { CheckSquare, Bell, Edit3 } from "lucide-react";
-
+import React, { useRef, useState, useEffect, useCallback } from "react";
+import { useSelector } from "react-redux";
+import { CheckSquare, Edit3, Bell } from "lucide-react";
 
 import ChecklistSection from "@/components/General/Checklist";
 import QuickNotesSection from "@/components/General/QuickNotes";
 import GeneralRemindersSection from "@/components/General/Reminder";
 
-
-const sections = [
-  {
-    key: "tasks",
-    title: "Tasks",
-    icon: CheckSquare,
-    gradientClass: "bg-gradient-to-r from-green-500 to-green-700",
-    component: <ChecklistSection />,
-    value: "3 ／ 5",
-  },
-  {
-    key: "notes",
-    title: "Notes",
-    icon: Edit3,
-    gradientClass: "bg-gradient-to-r from-blue-500 to-blue-700",
-    component: <QuickNotesSection />,
-    value: "3",
-  },
-  {
-    key: "reminders",
-    title: "Reminders",
-    icon: Bell,
-    gradientClass: "bg-gradient-to-r from-yellow-500 to-yellow-700",
-    component: <GeneralRemindersSection />,
-    value: "3",
-  },
-];
+import ChecklistService from "@/appwrite/generalTasksServices";
+import GeneralNotesService from "@/appwrite/generalNotesServices";
+import GeneralRemindersService from "@/appwrite/generalReminderServices";
 
 export default function GeneralDashboard() {
+  const userId = useSelector((s) => s.auth.userData?.$id);
   const [focus, setFocus] = useState(null);
   const refs = {
     tasks: useRef(null),
@@ -45,13 +20,66 @@ export default function GeneralDashboard() {
     reminders: useRef(null),
   };
 
-  const handleCardClick = (key) => {
-    if (focus === key) {
-      setFocus(null);
-      return;
+  const [taskCounts, setTaskCounts] = useState({ done: 0, total: 0 });
+  const [notesCount, setNotesCount] = useState(0);
+  const [remindersCount, setRemindersCount] = useState(0);
+
+  const loadCounts = useCallback(async () => {
+    if (!userId) return;
+    try {
+      const [t, n, r] = await Promise.all([
+        ChecklistService.listTasks(userId),
+        GeneralNotesService.listNotes(userId),
+        GeneralRemindersService.listReminders(userId),
+      ]);
+      const tasks = t.documents || [];
+      setTaskCounts({
+        done: tasks.filter((t) => t.completed).length,
+        total: tasks.length,
+      });
+      setNotesCount(n.documents?.length || 0);
+      setRemindersCount(r.documents?.length || 0);
+    } catch (err) {
+      console.error("Failed to load counts", err);
     }
-    setFocus(key);
-    refs[key].current.scrollIntoView({ behavior: "smooth" });
+  }, [userId]);
+
+  useEffect(() => {
+    loadCounts();
+  }, [loadCounts]);
+
+  const sections = [
+    {
+      key: "tasks",
+      title: "Tasks",
+      icon: CheckSquare,
+      gradientClass: "bg-gradient-to-r from-green-500 to-green-700",
+      value: `${taskCounts.done} ／ ${taskCounts.total}`,
+      component: <ChecklistSection onChange={loadCounts} />,
+    },
+    {
+      key: "notes",
+      title: "Notes",
+      icon: Edit3,
+      gradientClass: "bg-gradient-to-r from-blue-500 to-blue-700",
+      value: `${notesCount}`,
+      component: <QuickNotesSection onChange={loadCounts} />,
+    },
+    {
+      key: "reminders",
+      title: "Reminders",
+      icon: Bell,
+      gradientClass: "bg-gradient-to-r from-yellow-500 to-yellow-700",
+      value: `${remindersCount}`,
+      component: <GeneralRemindersSection onChange={loadCounts} />,
+    },
+  ];
+
+  const handleClick = (key) => {
+    setFocus(focus === key ? null : key);
+    if (refs[key].current) {
+      refs[key].current.scrollIntoView({ behavior: "smooth" });
+    }
   };
 
   return (
@@ -65,7 +93,7 @@ export default function GeneralDashboard() {
       </div>
 
       {/* Summary Cards */}
-      <div className="flex flex-wrap gap-6">
+      <div className="flex flex-wrap gap-4">
         {sections.map(({ key, title, icon: Icon, gradientClass, value }) => (
           <SummaryCard
             key={key}
@@ -74,21 +102,21 @@ export default function GeneralDashboard() {
             icon={Icon}
             gradientClass={gradientClass}
             isActive={focus === key}
-            onClick={() => handleCardClick(key)}
+            onClick={() => handleClick(key)}
           />
         ))}
       </div>
 
-      {/* Sections Grid */}
+      {/* Sections */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
         {sections.map(({ key, component }) => {
-          const dimmed = focus && focus !== key;
+          const dim = focus && focus !== key;
           return (
             <div
               key={key}
               ref={refs[key]}
               className={`transition-opacity duration-500 ${
-                dimmed ? "opacity-30 pointer-events-none" : "opacity-100"
+                dim ? "opacity-30 pointer-events-none" : "opacity-100"
               }`}
             >
               {component}
@@ -100,27 +128,28 @@ export default function GeneralDashboard() {
   );
 }
 
-const SummaryCard = ({
+function SummaryCard({
   title,
   value,
   icon: Icon,
   gradientClass,
   isActive,
   onClick,
-}) => (
-  <button
-    onClick={onClick}
-    className={`
-      ${gradientClass}
-      flex items-center gap-3 w-48 p-4 rounded-xl shadow-lg transform transition
-      text-white
-      ${isActive ? "scale-105 shadow-2xl" : "hover:scale-105 hover:shadow-2xl"}
-    `}
-  >
-    <Icon className="w-6 h-6" />
-    <div className="text-left">
-      <p className="text-sm opacity-80">{title}</p>
-      <p className="text-2xl font-bold">{value}</p>
-    </div>
-  </button>
-);
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`
+        ${gradientClass}
+        flex items-center gap-3 w-44 p-4 rounded-2xl shadow-lg transform transition text-white
+        ${isActive ? "scale-105 shadow-2xl" : "hover:scale-105 hover:shadow-2xl"}
+      `}
+    >
+      <Icon className="w-6 h-6" />
+      <div className="text-left">
+        <p className="text-sm opacity-80">{title}</p>
+        <p className="text-xl font-bold">{value}</p>
+      </div>
+    </button>
+  );
+}

@@ -3,26 +3,31 @@ import React, { useState, useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
-  MessageSquare    as ChatIcon,
-  Mic              as MicOnIcon,
-  MicOff           as MicOffIcon,
-  User             as UserIcon,
-  Bot              as BotAvatarIcon,
-  Loader2          as SpinnerIcon,
+  MessageSquare as ChatIcon,
+  Mic as MicOnIcon,
+  MicOff as MicOffIcon,
+  User as UserIcon,
+  Bot as BotAvatarIcon,
+  Loader2 as SpinnerIcon,
 } from "lucide-react";
 import authService from "../../appwrite/auth";
+import { useSelector } from "react-redux";
+
+
 
 export default function ProdixWidgetExpanded() {
-  const [messages, setMessages]   = useState([
-    { sender: "bot", text: "Welcome back, Anmol! 🎉 Ready to conquer today’s goals?" },
+  const userData = useSelector(state => state.auth.userData);
+  const userName = userData?.name ?? '';
+  const [messages, setMessages] = useState([
+    { sender: "bot", text: `Welcome back, ${userName} ! 🎉 Ready to conquer today’s goals?` },
   ]);
-  const [input, setInput]         = useState("");
-  const [loading, setLoading]     = useState(false);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
   const [listening, setListening] = useState(false);
-  const [summary, setSummary]     = useState("");
-  const recognitionRef            = useRef(null);
-  const textareaRef               = useRef(null);
-  const endRef                    = useRef(null);
+  const [summary, setSummary] = useState("");
+  const recognitionRef = useRef(null);
+  const textareaRef = useRef(null);
+  const endRef = useRef(null);
 
   // — Helper: speak text via TTS —
   const speak = (text) => {
@@ -38,19 +43,20 @@ export default function ProdixWidgetExpanded() {
     if (!SpeechRecognition) return;
 
     const recog = new SpeechRecognition();
-    recog.continuous     = false;
+    recog.continuous = false;
     recog.interimResults = false;
-    recog.lang           = "en-US";
+    recog.lang = "en-US";
 
     recog.onstart = () => setListening(true);
-    recog.onend   = () => setListening(false);
+    recog.onend = () => setListening(false);
     recog.onerror = () => setListening(false);
 
     recog.onresult = (e) => {
       const transcript = Array.from(e.results)
         .map(r => r[0].transcript)
         .join("");
-      sendMessage(transcript);
+      // mark this message as spoken
+      sendMessage(transcript, true);
     };
 
     recognitionRef.current = recog;
@@ -61,7 +67,7 @@ export default function ProdixWidgetExpanded() {
     (async () => {
       try {
         const { jwt } = await authService.createJWT();
-        const resp     = await fetch("/api/context", {
+        const resp = await fetch("/api/context", {
           headers: { Authorization: `Bearer ${jwt}` },
         });
         const { summary } = await resp.json();
@@ -94,7 +100,8 @@ export default function ProdixWidgetExpanded() {
   };
 
   // — Send both typed & spoken messages —
-  const sendMessage = async (overrideText) => {
+  // isSpeech = true if sent via mic; false if typed
+  const sendMessage = async (overrideText, isSpeech = false) => {
     const txt = (overrideText ?? input).trim();
     if (!txt || loading) return;
 
@@ -107,10 +114,10 @@ export default function ProdixWidgetExpanded() {
     try {
       const { jwt } = await authService.createJWT();
       const resp = await fetch("/api/chat", {
-        method:  "POST",
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization:  `Bearer ${jwt}`,
+          Authorization: `Bearer ${jwt}`,
         },
         body: JSON.stringify({ message: txt, summary }),
       });
@@ -118,13 +125,13 @@ export default function ProdixWidgetExpanded() {
 
       // append bot bubble
       setMessages(prev => [...prev, { sender: "bot", text: reply }]);
-      // speak the reply
-      speak(reply);
+      // only speak if this was a spoken (mic) message
+      if (isSpeech) speak(reply);
     } catch (err) {
       console.error("Chat error:", err);
       const errMsg = "😞 Oops! Something went wrong. Please try again.";
       setMessages(prev => [...prev, { sender: "bot", text: errMsg }]);
-      speak(errMsg);
+      if (isSpeech) speak(errMsg);
     } finally {
       setLoading(false);
     }
@@ -146,19 +153,17 @@ export default function ProdixWidgetExpanded() {
           {messages.map((m, i) => (
             <div
               key={i}
-              className={`flex items-start ${
-                m.sender === "bot" ? "justify-start" : "justify-end"
-              }`}
+              className={`flex items-start ${m.sender === "bot" ? "justify-start" : "justify-end"
+                }`}
             >
               {m.sender === "bot" && (
                 <BotAvatarIcon className="w-8 h-8 text-emerald-400 mr-4 mt-1" />
               )}
               <div
-                className={`max-w-[85%] p-6 rounded-3xl shadow-md ${
-                  m.sender === "bot"
+                className={`max-w-[85%] p-6 rounded-3xl shadow-md ${m.sender === "bot"
                     ? "bg-emerald-50 text-emerald-800"
                     : "bg-blue-50 text-blue-800 ml-auto"
-                }`}
+                  }`}
               >
                 <div className="prose prose-sm m-0 p-0 break-words">
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>
@@ -192,8 +197,9 @@ export default function ProdixWidgetExpanded() {
             value={input}
             onChange={handleInputChange}
             onKeyDown={(e) =>
-              e.key === "Enter" && !e.shiftKey &&
-              (e.preventDefault(), sendMessage())
+              e.key === "Enter" &&
+              !e.shiftKey &&
+              (e.preventDefault(), sendMessage(undefined, false))
             }
             disabled={loading}
             placeholder="Type your message…"
@@ -216,7 +222,7 @@ export default function ProdixWidgetExpanded() {
 
           {/* Send button */}
           <button
-            onClick={() => sendMessage()}
+            onClick={() => sendMessage(undefined, false)}
             disabled={loading}
             className="p-4 bg-gradient-to-r from-emerald-400 to-lime-500 rounded-2xl shadow-lg hover:from-emerald-500 hover:to-lime-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
