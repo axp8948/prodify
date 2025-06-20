@@ -3,34 +3,65 @@ import React, { useState, useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
-  MessageSquare as ChatIcon,
-  User as UserIcon,
-  Bot as BotAvatarIcon,
-  Loader2 as SpinnerIcon,
+  MessageSquare    as ChatIcon,
+  Mic              as MicOnIcon,
+  MicOff           as MicOffIcon,
+  User             as UserIcon,
+  Bot              as BotAvatarIcon,
+  Loader2          as SpinnerIcon,
 } from "lucide-react";
 import authService from "../../appwrite/auth";
 
 export default function ProdixWidgetExpanded() {
-  const [messages, setMessages] = useState([
+  const [messages, setMessages]   = useState([
     { sender: "bot", text: "Welcome back, Anmol! 🎉 Ready to conquer today’s goals?" },
   ]);
-  const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [summary, setSummary] = useState("");
-  const textareaRef = useRef(null);
-  const endRef = useRef(null);
+  const [input, setInput]         = useState("");
+  const [loading, setLoading]     = useState(false);
+  const [listening, setListening] = useState(false);
+  const [summary, setSummary]     = useState("");
+  const recognitionRef            = useRef(null);
+  const textareaRef               = useRef(null);
+  const endRef                    = useRef(null);
 
-  // scroll to bottom on new messages
+  // — Helper: speak text via TTS —
+  const speak = (text) => {
+    if (!window.speechSynthesis) return;
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = "en-US";
+    window.speechSynthesis.speak(utter);
+  };
+
+  // — SpeechRecognition setup —
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) return;
 
-  // fetch context once
+    const recog = new SpeechRecognition();
+    recog.continuous     = false;
+    recog.interimResults = false;
+    recog.lang           = "en-US";
+
+    recog.onstart = () => setListening(true);
+    recog.onend   = () => setListening(false);
+    recog.onerror = () => setListening(false);
+
+    recog.onresult = (e) => {
+      const transcript = Array.from(e.results)
+        .map(r => r[0].transcript)
+        .join("");
+      sendMessage(transcript);
+    };
+
+    recognitionRef.current = recog;
+  }, []);
+
+  // — Fetch initial context summary —
   useEffect(() => {
     (async () => {
       try {
         const { jwt } = await authService.createJWT();
-        const resp = await fetch("/api/context", {
+        const resp     = await fetch("/api/context", {
           headers: { Authorization: `Bearer ${jwt}` },
         });
         const { summary } = await resp.json();
@@ -41,7 +72,12 @@ export default function ProdixWidgetExpanded() {
     })();
   }, []);
 
-  // auto‐resize textarea
+  // — Scroll to bottom on new messages —
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  // — Auto-resize textarea —
   const handleInputChange = (e) => {
     setInput(e.target.value);
     const ta = textareaRef.current;
@@ -49,11 +85,21 @@ export default function ProdixWidgetExpanded() {
     ta.style.height = `${ta.scrollHeight}px`;
   };
 
-  const sendMessage = async () => {
-    const txt = input.trim();
+  // — Toggle mic listening —
+  const toggleListening = () => {
+    if (!recognitionRef.current) return;
+    listening
+      ? recognitionRef.current.stop()
+      : recognitionRef.current.start();
+  };
+
+  // — Send both typed & spoken messages —
+  const sendMessage = async (overrideText) => {
+    const txt = (overrideText ?? input).trim();
     if (!txt || loading) return;
 
-    setMessages((prev) => [...prev, { sender: "user", text: txt }]);
+    // add user bubble
+    setMessages(prev => [...prev, { sender: "user", text: txt }]);
     setInput("");
     textareaRef.current.style.height = "auto";
     setLoading(true);
@@ -61,21 +107,24 @@ export default function ProdixWidgetExpanded() {
     try {
       const { jwt } = await authService.createJWT();
       const resp = await fetch("/api/chat", {
-        method: "POST",
+        method:  "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${jwt}`,
+          Authorization:  `Bearer ${jwt}`,
         },
         body: JSON.stringify({ message: txt, summary }),
       });
       const { reply } = await resp.json();
-      setMessages((prev) => [...prev, { sender: "bot", text: reply }]);
+
+      // append bot bubble
+      setMessages(prev => [...prev, { sender: "bot", text: reply }]);
+      // speak the reply
+      speak(reply);
     } catch (err) {
       console.error("Chat error:", err);
-      setMessages((prev) => [
-        ...prev,
-        { sender: "bot", text: "😞 Oops! Something went wrong. Please try again." },
-      ]);
+      const errMsg = "😞 Oops! Something went wrong. Please try again.";
+      setMessages(prev => [...prev, { sender: "bot", text: errMsg }]);
+      speak(errMsg);
     } finally {
       setLoading(false);
     }
@@ -97,7 +146,9 @@ export default function ProdixWidgetExpanded() {
           {messages.map((m, i) => (
             <div
               key={i}
-              className={`flex items-start ${m.sender === "bot" ? "justify-start" : "justify-end"}`}
+              className={`flex items-start ${
+                m.sender === "bot" ? "justify-start" : "justify-end"
+              }`}
             >
               {m.sender === "bot" && (
                 <BotAvatarIcon className="w-8 h-8 text-emerald-400 mr-4 mt-1" />
@@ -125,7 +176,7 @@ export default function ProdixWidgetExpanded() {
             <div className="flex items-start animate-pulse">
               <BotAvatarIcon className="w-8 h-8 text-emerald-400 mr-4 mt-1" />
               <div className="max-w-[85%] p-6 rounded-3xl shadow-md bg-emerald-50 text-emerald-800">
-                <SpinnerIcon className="w-6 h-6 animate-spin inline-block mr-2" />
+                <SpinnerIcon className="w-6 h-6 inline-block mr-2 animate-spin" />
                 Prodix is typing…
               </div>
             </div>
@@ -133,7 +184,7 @@ export default function ProdixWidgetExpanded() {
           <div ref={endRef} />
         </div>
 
-        {/* Input */}
+        {/* Input with Mic next to textarea */}
         <div className="flex items-end space-x-4 border-t pt-6">
           <textarea
             ref={textareaRef}
@@ -141,14 +192,31 @@ export default function ProdixWidgetExpanded() {
             value={input}
             onChange={handleInputChange}
             onKeyDown={(e) =>
-              e.key === "Enter" && !e.shiftKey && (e.preventDefault(), sendMessage())
+              e.key === "Enter" && !e.shiftKey &&
+              (e.preventDefault(), sendMessage())
             }
             disabled={loading}
             placeholder="Type your message…"
             className="flex-1 resize-none bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-2xl px-6 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-400 placeholder-gray-400"
           />
+
+          {/* Mic toggle */}
           <button
-            onClick={sendMessage}
+            onClick={toggleListening}
+            disabled={loading}
+            className="p-3 rounded-full bg-emerald-100 hover:bg-emerald-200 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            aria-label={listening ? "Stop listening" : "Start speaking"}
+          >
+            {listening ? (
+              <MicOffIcon className="w-6 h-6 text-red-500 animate-pulse" />
+            ) : (
+              <MicOnIcon className="w-6 h-6 text-emerald-500" />
+            )}
+          </button>
+
+          {/* Send button */}
+          <button
+            onClick={() => sendMessage()}
             disabled={loading}
             className="p-4 bg-gradient-to-r from-emerald-400 to-lime-500 rounded-2xl shadow-lg hover:from-emerald-500 hover:to-lime-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
