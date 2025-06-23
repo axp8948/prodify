@@ -1,16 +1,38 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 const DailyDosePage = () => {
-  // Static placeholders for now
-  const wordData = {
-    word: 'Serendipity',
-    definitions: [
-      {
-        text: 'The occurrence of happy or beneficial events by chance.',
-      },
-    ],
-    note: 'Finding that forgotten $20 bill in my coat pocket was pure serendipity—exactly what I needed for lunch.',
-  };
+  const [wordData, setWordData] = useState(null);
+  const apiKey = import.meta.env.VITE_WORDNIK_API_KEY
+
+  useEffect(() => {
+    const fetchWordOfTheDay = async () => {
+      try {
+        const res = await fetch(
+          `https://api.wordnik.com/v4/words.json/wordOfTheDay?api_key=${apiKey}`
+        );
+        if (!res.ok) throw new Error('Failed to fetch word of the day.');
+        const data = await res.json();
+        //console.log(data)
+        setWordData(data);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    if (apiKey) fetchWordOfTheDay();
+    else console.warn('No Wordnik API key found in .env');
+  }, [apiKey]);
+
+  if (!wordData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-gray-400">
+        Loading Word of the Day…
+      </div>
+    );
+  }
+
+  const { word, definitions, examples } = wordData;
+  const definitionText = definitions?.[0]?.text || 'No definition available.';
 
   const quoteText = '“Success usually comes to those who are too busy to be looking for it.”';
   const quoteAuthor = 'Henry David Thoreau';
@@ -23,13 +45,13 @@ const DailyDosePage = () => {
           absolute -top-16 -left-16 w-56 h-56 bg-blue-600 rounded-full 
           opacity-20 mix-blend-multiply filter blur-3xl animate-pulse
         "
-      ></div>
+      />
       <div
         className="
           absolute -bottom-16 -right-16 w-64 h-64 bg-purple-600 rounded-full 
           opacity-20 mix-blend-multiply filter blur-3xl animate-bounce
         "
-      ></div>
+      />
 
       <div className="relative z-10 w-full max-w-4xl">
         <h1
@@ -42,14 +64,14 @@ const DailyDosePage = () => {
         </h1>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-          {/* ─────────────── WORD CARD ─────────────── */}
+          {/* WORD CARD */}
           <div className="relative">
             <div
               className="
                 absolute inset-0 transform -rotate-3 
                 rounded-2xl bg-gradient-to-br from-blue-900 to-blue-700 opacity-40
               "
-            ></div>
+            />
             <div
               className="
                 relative bg-[#1a1a1a] border border-white/10 rounded-2xl p-8
@@ -57,7 +79,6 @@ const DailyDosePage = () => {
               "
             >
               <h2 className="text-3xl font-bold text-blue-400 mb-4">Word of the Day</h2>
-
               <div
                 className="
                   text-5xl font-extrabold text-center 
@@ -65,23 +86,25 @@ const DailyDosePage = () => {
                   mb-2
                 "
               >
-                {wordData.word}
+                {word}
               </div>
               <p className="italic text-gray-300 mb-4">
-                “{wordData.definitions[0].text}”
+                “{definitionText}”
               </p>
-              <p className="text-gray-500 text-sm">➤ {wordData.note}</p>
+              {examples[0].text && (
+                <p className="text-gray-500 text-sm">➤ {examples[0].text}</p>
+              )}
             </div>
           </div>
 
-          {/* ─────────────── QUOTE CARD ─────────────── */}
+          {/* QUOTE CARD */}
           <div className="relative">
             <div
               className="
                 absolute inset-0 transform rotate-3 
                 rounded-2xl bg-gradient-to-br from-green-900 to-green-700 opacity-40
               "
-            ></div>
+            />
             <div
               className="
                 relative bg-[#1a1a1a] border border-white/10 rounded-2xl p-8
@@ -91,7 +114,6 @@ const DailyDosePage = () => {
               <h2 className="text-3xl font-bold text-green-400 mb-4">
                 Quote of the Day
               </h2>
-
               <p className="text-gray-200 italic text-lg mb-4">
                 {quoteText}
               </p>
