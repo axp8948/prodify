@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import dayjs from 'dayjs';
 import { AlertTriangle, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -10,17 +10,22 @@ import classRemindersService   from '@/appwrite/classReminderServices';
 
 export default function UpcomingDueBanner({ userId }) {
   const [dueReminders, setDueReminders] = useState([]);
-  const [visible, setVisible]           = useState(false);
+  const [visible, setVisible] = useState(false);
+  const prevUserRef = useRef();
 
-  // — Clear “shown” flag on each new login (i.e. when userId changes)
+  // Clear “shown” flag only when the userId actually changes (i.e. new login)
   useEffect(() => {
     if (!userId) return;
-    const sessionKey = `UpcomingBannerShown_${userId}`;
-    sessionStorage.removeItem(sessionKey);
+    const prevUser = prevUserRef.current;
+    if (prevUser && prevUser !== userId) {
+      sessionStorage.removeItem(`UpcomingBannerShown_${prevUser}`);
+    }
+    // reset visibility for the new or returning user
     setVisible(false);
+    prevUserRef.current = userId;
   }, [userId]);
 
-  // — Load general + class reminders due in next 24h
+  // Load general + class reminders due in next 24h
   useEffect(() => {
     if (!userId) return;
     const cutoff = dayjs().add(24, 'hour');
@@ -66,7 +71,7 @@ export default function UpcomingDueBanner({ userId }) {
     })();
   }, [userId]);
 
-  // — Show banner once per login
+  // Show banner once per login (per userId)
   useEffect(() => {
     if (!userId || dueReminders.length === 0) return;
     const sessionKey = `UpcomingBannerShown_${userId}`;
