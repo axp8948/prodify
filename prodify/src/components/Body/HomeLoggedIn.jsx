@@ -4,11 +4,14 @@ import { useSelector } from 'react-redux'
 import Header from '../../Header/Header'
 import FeatureCard from '../FeatureCard'
 import { BookOpen, DollarSign, Activity, ListCheck, Icon, Laugh, BookOpenText, Sparkles, MessagesSquare } from 'lucide-react'
+import UpcomingDueBanner from '../Increments/UpcomingDueBanner'
 
 const HomeLoggedIn = () => {
 
     const userData = useSelector(state => state.auth.userData);
     const userName = userData?.name ?? '';
+    const userId = userData?.$id
+    //console.log(userId)
 
     useEffect(() => {
         // Ensure dark mode is enabled on <html>
@@ -72,6 +75,9 @@ const HomeLoggedIn = () => {
 
     return (
         <div className="min-h-screen bg-[#0d1013]">
+
+            {/* Upcoming Reminder */}
+            <UpcomingDueBanner userId={userId} />
 
             {/* Welcome Hero */}
             <div className="relative px-6 py-16  text-center">

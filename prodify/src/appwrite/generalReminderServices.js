@@ -11,11 +11,25 @@ class GeneralRemindersService {
     this.db = new Databases(this.client);
   }
 
+  /**
+   * Fetch up to `limit` general reminders for this user, ordered by due date.
+   * Ensures `limit` is always a valid positive integer (defaults to 50).
+   */
   async listReminders(userId, limit = 50) {
+    // Coerce and validate limit
+    let numLimit = parseInt(limit, 10);
+    if (Number.isNaN(numLimit) || numLimit <= 0) {
+      numLimit = 50;
+    }
+
     return this.db.listDocuments(
       conf.appwriteDatabaseId,
       conf.appwriteGeneralRemindersCollectionId,
-      [ Query.equal("userId", userId), Query.orderAsc("dueAt"), Query.limit(limit) ]
+      [
+        Query.equal("userId", userId),
+        Query.orderAsc("dueAt"),
+        Query.limit(numLimit),
+      ]
     );
   }
 
@@ -24,7 +38,7 @@ class GeneralRemindersService {
       conf.appwriteDatabaseId,
       conf.appwriteGeneralRemindersCollectionId,
       ID.unique(),
-      { userId, title, description, dueAt, isDone: false, }
+      { userId, title, description, dueAt, isDone: false }
     );
   }
 
