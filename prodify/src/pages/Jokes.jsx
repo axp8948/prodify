@@ -54,7 +54,7 @@ export default function JokesPage() {
   }, [showPunchline, joke]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0d1013] via-[#1a1e24] to-[#0d1013] px-4 py-16 flex flex-col items-center text-white">
+    <div className="min-h-screen  bg-[#0d1013] px-4 py-16 flex flex-col items-center text-white">
       {/* Header + Voice Toggle */}
       <div className="w-full max-w-lg flex items-center justify-between mb-8">
         <h1

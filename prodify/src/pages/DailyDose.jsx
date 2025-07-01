@@ -25,7 +25,7 @@ const DailyDosePage = () => {
 
   if (!wordData) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-gray-400">
+      <div className="min-h-screen flex items-center justify-center min-h-screen bg-[#0d1013] text-gray-400">
         Loading Word of the Day…
       </div>
     );

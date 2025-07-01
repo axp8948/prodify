@@ -83,47 +83,49 @@ export default function GeneralDashboard() {
   };
 
   return (
-    <div className="container mx-auto px-6 py-8 space-y-12">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-extrabold text-white">My Day</h1>
-        <p className="text-gray-400 mt-1">
-          A quick look at your tasks, notes, and reminders for today.
-        </p>
-      </div>
+    <div className="min-h-screen bg-[#0d1013]">
+      <div className="container mx-auto px-6 py-8 space-y-12  ">
+        {/* Header */}
+        <div className="mb-6">
+          <h1 className="text-3xl font-extrabold text-white">My Day</h1>
+          <p className="text-gray-400 mt-1">
+            A quick look at your tasks, notes, and reminders for today.
+          </p>
+        </div>
 
-      {/* Summary Cards */}
-      <div className="flex flex-wrap gap-4">
-        {sections.map(({ key, title, icon: Icon, gradientClass, value }) => (
-          <SummaryCard
-            key={key}
-            title={title}
-            value={value}
-            icon={Icon}
-            gradientClass={gradientClass}
-            isActive={focus === key}
-            onClick={() => handleClick(key)}
-          />
-        ))}
-      </div>
-
-      {/* Sections */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
-        {sections.map(({ key, component }) => {
-          const dim = focus && focus !== key;
-          return (
-            <div
+        {/* Summary Cards */}
+        <div className="flex flex-wrap gap-4">
+          {sections.map(({ key, title, icon: Icon, gradientClass, value }) => (
+            <SummaryCard
               key={key}
-              ref={refs[key]}
-              className={`transition-opacity duration-500 ${
-                dim ? "opacity-30 pointer-events-none" : "opacity-100"
-              }`}
-            >
-              {component}
-            </div>
-          );
-        })}
+              title={title}
+              value={value}
+              icon={Icon}
+              gradientClass={gradientClass}
+              isActive={focus === key}
+              onClick={() => handleClick(key)}
+            />
+          ))}
+        </div>
+
+        {/* Sections */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
+          {sections.map(({ key, component }) => {
+            const dim = focus && focus !== key;
+            return (
+              <div
+                key={key}
+                ref={refs[key]}
+                className={`transition-opacity duration-500 ${dim ? "opacity-30 pointer-events-none" : "opacity-100"
+                  }`}
+              >
+                {component}
+              </div>
+            );
+          })}
+        </div>
       </div>
+
     </div>
   );
 }

@@ -25,7 +25,7 @@ const Header = ({ isAuthenticated = false, onLogout }) => {
   }
 
   return (
-    <header className="sticky top-0 z-50 bg-[#0d1117] bg-opacity-70 backdrop-blur-md border-b border-gray-600 px-6 py-4">
+    <header className="sticky top-0 z-50 bg-[#0d1117] bg-opacity-70 backdrop-blur-md border-b border-gray-800 px-6 py-4">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         {/* Logo */}
         <Link to="/" className="text-2xl font-bold text-white">

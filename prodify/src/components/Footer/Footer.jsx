@@ -8,7 +8,7 @@ export default function Footer() {
   }
 
   return (
-    <footer className="bg-[#0d1117] bg-opacity-70 backdrop-blur-md border-t border-gray-600 text-gray-400 py-6 mt-auto">
+    <footer className="bg-[#0d1117] bg-opacity-70 backdrop-blur-md border-t border-gray-800 text-gray-400 py-6 mt-auto">
       <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0 px-6">
         <p className="text-sm">
           &copy; {new Date().getFullYear()} Prodify. All rights reserved.

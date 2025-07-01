@@ -4,6 +4,7 @@ import ProdixWidgetEnhanced from "../components/Prodix/ProdixChatBot";
 
 export default function ChatPage() {
   return (
+    <div className="min-h-screen bg-[#0d1013]">
     <div className="p-8 flex flex-col items-center">
       {/* 🔥 Bold, gradient heading */}
       <h1
@@ -20,5 +21,6 @@ export default function ChatPage() {
       {/* 💬 The chat widget */}
       <ProdixWidgetEnhanced />
     </div>
+     </div>
   );
 }
