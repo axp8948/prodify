@@ -1,6 +1,7 @@
 // server.js
 import "dotenv/config";
 import express from "express";
+import cors from "cors";  
 import fetch from "node-fetch";                  // if Node 18+ you can omit and use global fetch
 import { Client, Databases, Account, Query } from "appwrite";
 
