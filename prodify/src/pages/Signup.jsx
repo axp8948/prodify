@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import SignupForm from '@/components/forms/SignupForm';
+import SignupForm from '@/components/Forms/SignupForm';
 import authService from '@/appwrite/auth';
 import { useDispatch } from 'react-redux';
 import { authLogin } from '@/store/authSlice';
