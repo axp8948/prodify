@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import LoginForm from '@/components/forms/LoginForm';
+import LoginForm from '@/components/Forms/LoginForm';
 import { authLogin } from '@/store/authSlice';
 import authService from '@/appwrite/auth';
 import { useDispatch, useSelector } from 'react-redux';
