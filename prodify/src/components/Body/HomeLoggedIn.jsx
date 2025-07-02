@@ -11,6 +11,7 @@ const HomeLoggedIn = () => {
     const userData = useSelector(state => state.auth.userData);
     const userName = userData?.name ?? '';
     const userId = userData?.$id
+    const timeTracked = 
     //console.log(userId)
 
     useEffect(() => {
@@ -86,7 +87,7 @@ const HomeLoggedIn = () => {
 
                 <div className="relative z-10 space-y-4">
                     {/* Gradient Heading */}
-                    <h2 className="text-3xl lg:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-purple-500 to-orange-900">
+                    <h2 className="text-3xl lg:text-5xl font-extrabold  bg-clip-text text-transparent bg-gradient-to-r from-blue-200 via-purple-800 to-orange-200">
                         Welcome back, {userName}!
                     </h2>
                     <p className="text-gray-300 text-xl">
