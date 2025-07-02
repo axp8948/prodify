@@ -55,7 +55,7 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-[#0d1013] flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md bg-gray-800 rounded-lg shadow-lg p-8">
         <h2 className="text-2xl font-bold text-white mb-6 text-center">
           Sign in to your account
