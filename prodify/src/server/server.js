@@ -4,8 +4,24 @@ import express from "express";
 import fetch from "node-fetch";                  // if Node 18+ you can omit and use global fetch
 import { Client, Databases, Account, Query } from "appwrite";
 
+
+
+
 const app = express();
 app.use(express.json());
+
+// 2) Setup CORS to allow your front-end
+const allowed = [
+  'http://localhost:5173',           // dev
+  'https://prodify-d1ck.onrender.com', // old URL
+  'https://www.the-prodify.com'      // your real front-end
+];
+app.use(cors({
+  origin: (origin, cb) => {
+    if (!origin || allowed.includes(origin)) return cb(null, true);
+    cb(new Error(`Origin ${origin} not allowed by CORS`));
+  }
+}));
 
 // ─── 1) ENV VARS ─────────────────────────────────────────────────────────────
 const {

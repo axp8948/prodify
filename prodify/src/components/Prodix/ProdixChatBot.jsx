@@ -3,19 +3,23 @@ import React, { useState, useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
-  MessageSquare as ChatIcon,
-  Mic as MicOnIcon,
-  MicOff as MicOffIcon,
-  User as UserIcon,
-  Bot as BotAvatarIcon,
-  Loader2 as SpinnerIcon,
+  MessageSquare    as ChatIcon,
+  Mic              as MicOnIcon,
+  MicOff           as MicOffIcon,
+  User             as UserIcon,
+  Bot              as BotAvatarIcon,
+  Loader2          as SpinnerIcon,
 } from "lucide-react";
 import authService from "../../appwrite/auth";
 import { useSelector } from "react-redux";
 
 export default function ProdixWidgetExpanded() {
+  // Base URL for your API, injected by Vite
+  const API_BASE = import.meta.env.VITE_API_BASE;
+
   const userData = useSelector((state) => state.auth.userData);
   const userName = userData?.name ?? "";
+
   const [messages, setMessages] = useState([
     { sender: "bot", text: `Welcome back, ${userName}! 🎉 Ready to conquer today’s goals?` },
   ]);
@@ -27,6 +31,7 @@ export default function ProdixWidgetExpanded() {
   const textareaRef = useRef(null);
   const endRef = useRef(null);
 
+  // Speak text via Web Speech API
   const speak = (text) => {
     if (!window.speechSynthesis) return;
     const utter = new SpeechSynthesisUtterance(text);
@@ -34,42 +39,52 @@ export default function ProdixWidgetExpanded() {
     window.speechSynthesis.speak(utter);
   };
 
+  // Set up speech recognition for voice input
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) return;
+
     const recog = new SpeechRecognition();
-    recog.continuous = false;
+    recog.continuous     = false;
     recog.interimResults = false;
-    recog.lang = "en-US";
+    recog.lang           = "en-US";
+
     recog.onstart = () => setListening(true);
-    recog.onend = () => setListening(false);
+    recog.onend   = () => setListening(false);
     recog.onerror = () => setListening(false);
+
     recog.onresult = (e) => {
-      const transcript = Array.from(e.results).map((r) => r[0].transcript).join("");
+      const transcript = Array.from(e.results)
+        .map((r) => r[0].transcript)
+        .join("");
       sendMessage(transcript, true);
     };
+
     recognitionRef.current = recog;
   }, []);
 
+  // Load the user context summary
   useEffect(() => {
     (async () => {
       try {
         const { jwt } = await authService.createJWT();
-        const resp = await fetch("/api/context", {
+        const resp     = await fetch(`${API_BASE}/api/context`, {
           headers: { Authorization: `Bearer ${jwt}` },
         });
-        const data = await resp.json();
+        const data     = await resp.json();
         setSummary(data.summary);
       } catch (err) {
         console.error("Failed to load context:", err);
       }
     })();
-  }, []);
+  }, [API_BASE]);
 
+  // Scroll to bottom when messages update
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Auto-resize the textarea as user types
   const handleInputChange = (e) => {
     setInput(e.target.value);
     const ta = textareaRef.current;
@@ -77,14 +92,18 @@ export default function ProdixWidgetExpanded() {
     ta.style.height = `${ta.scrollHeight}px`;
   };
 
+  // Toggle voice recognition
   const toggleListening = () => {
     if (!recognitionRef.current) return;
     listening ? recognitionRef.current.stop() : recognitionRef.current.start();
   };
 
+  // Send a message (typed or spoken) to the backend and handle reply
   const sendMessage = async (overrideText, isSpeech = false) => {
     const txt = (overrideText ?? input).trim();
     if (!txt || loading) return;
+
+    // add user message
     setMessages((prev) => [...prev, { sender: "user", text: txt }]);
     setInput("");
     textareaRef.current.style.height = "auto";
@@ -92,15 +111,17 @@ export default function ProdixWidgetExpanded() {
 
     try {
       const { jwt } = await authService.createJWT();
-      const resp = await fetch("/api/chat", {
-        method: "POST",
+      const resp = await fetch(`${API_BASE}/api/chat`, {
+        method:  "POST",
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${jwt}`,
+          "Content-Type":  "application/json",
+          Authorization:   `Bearer ${jwt}`,
         },
         body: JSON.stringify({ message: txt, summary }),
       });
       const { reply } = await resp.json();
+
+      // add bot reply
       setMessages((prev) => [...prev, { sender: "bot", text: reply }]);
       if (isSpeech) speak(reply);
     } catch (err) {
