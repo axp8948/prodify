@@ -16,6 +16,7 @@ import { useSelector } from "react-redux";
 export default function ProdixWidgetExpanded() {
   // Base URL for your API, injected by Vite
   const API_BASE = import.meta.env.VITE_API_BASE;
+  console.log(import.meta.env.VITE_API_BASE);
 
   const userData = useSelector((state) => state.auth.userData);
   const userName = userData?.name ?? "";
