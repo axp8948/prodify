@@ -21,7 +21,7 @@ import {
 } from "recharts";
 import dayjs from "dayjs";
 
-import GymCheckinSection from "../components/PhysicalActivities/GymCheckinSection";
+import GymCheckinSection from "../components/PhysicalActivities/GymCheckInSection";
 import GymTimeSection from "../components/PhysicalActivities/GymTimeSection";
 import StepsSection from "../components/PhysicalActivities/StepsSection";
 import OtherActivitiesSection from "../components/PhysicalActivities/OtherActivitiesSection";
