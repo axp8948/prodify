@@ -14,7 +14,7 @@ import authService from "../../appwrite/auth";
 import { useSelector } from "react-redux";
 
 export default function ProdixWidgetExpanded() {
-  // Base URL for your API, injected by Vite
+  // Base URL for API, injected by Vite
   const API_BASE = import.meta.env.VITE_API_BASE;
   console.log("Built API BASE: ", import.meta.env.VITE_API_BASE);
 

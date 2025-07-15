@@ -14,6 +14,7 @@ import General from './pages/General.jsx'
 import Finance from './pages/Finance.jsx'
 import PhysicalActivities from './pages/PhysicalActivities.jsx'
 import Prodix from './pages/Prodix.jsx'
+import FlipClock from './components/FlipClock/FlipClock.jsx'
 // …other imports
 
 export default function App() {
@@ -35,6 +36,7 @@ export default function App() {
           <Route path="/finance" element={<Finance />} />
           <Route path="/activities" element={<PhysicalActivities />} />
           <Route path="/prodix" element={<Prodix />} />
+          <Route path="/clock" element={<FlipClock/>} />
         
 
 

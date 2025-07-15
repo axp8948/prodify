@@ -170,6 +170,29 @@ export class SessionsService {
       return null;
     }
   }
+
+  // in appwrite/sessionsService.js
+
+  /**
+   * List all class session records for a given user.
+   * (No classId filter)
+   */
+  async listAllSessions(userId) {
+    try {
+      return await this.databases.listDocuments(
+        conf.appwriteDatabaseId,
+        conf.appwriteSessionCollectionId,
+        [
+          Query.equal("userId", userId),
+          Query.orderDesc("sessionDate"),
+        ]
+      );
+    } catch (error) {
+      console.error("SessionsService :: listAllSessions ::", error);
+      return { documents: [] };
+    }
+  }
+
 }
 
 const sessionsService = new SessionsService();

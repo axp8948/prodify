@@ -46,8 +46,7 @@ const HomeNotLoggedIn = () => {
           </span>
         </h1>
         <p className="mt-4 text-lg text-gray-400 max-w-2xl">
-          Never miss anything, and improve your productivity with reminders,
-          checklists, notes, and more—tailored just for you.
+          From reminders to routines, Prodify keeps your day organized, your mind focused, and your goals on track—tailored just for you.
         </p>
         <div className="mt-8 flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4">
           <Link to="/signup">
