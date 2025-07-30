@@ -34,15 +34,21 @@ npm run dev
 
 Then open `http://localhost:5173` in your browser.
 
+Check out the [Live Demo](https://www.the-prodify.com) to see the app in action!
+
 ---
 
 ## 🖼️ Screenshots
 
 ![Homepage](./screenshots/homepage.png)
-![Dashboard](./screenshots/homepage_signedin.png)
+![Dashboard](./screenshots/homepage_signedIn.png)
+![Prodix](./screenshots/prodix.png)
 ![My Day](./screenshots/general.png)
 ![Class Tracker](./screenshots/classes.png)
 ![Graph Visualization](./screenshots/graphs.png)
+![Physical Tracker](./screenshots/physicalTracker.png)
+![Finance](./screenshots/finance.png)
+![Class Notes](./screenshots/classNotes.png)
 
 ---
 
